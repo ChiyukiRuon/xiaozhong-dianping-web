@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Location } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Login from '../components/Login.vue'
-import { get } from '@/request/axios'
+import { getPublicKey } from '@/request/api'
+import store from '@/store'
+import type { response } from '@/interface/api'
 
 const input = ref('')
 const loginView = ref(false)
@@ -10,8 +12,15 @@ const login = () => {
     loginView.value = !loginView.value
 }
 
-get('/test', { code: 200 }).then(res => {
-    console.log(res)
+onMounted(() => {
+    if (store.state.publicKey === '') {
+        getPublicKey().then((res: response) => {
+            if (res.code === 200) {
+                console.log('获取密钥', res.data.key)
+                store.commit('setPublicKey', res.data.key)
+            }
+        })
+    }
 })
 </script>
 

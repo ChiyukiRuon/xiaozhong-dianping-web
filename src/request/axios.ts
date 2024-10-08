@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { ElMessage } from 'element-plus'
+import router from '@/router'
+import type { response } from '@/interface/api'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 axios.create({
-    // baseURL: import.meta.env.BASE_URL,
     headers: {
         'Content-Type': 'application/json'
     },
@@ -13,7 +14,6 @@ axios.create({
 
 axios.interceptors.request.use(
     config => {
-        console.log(config, import.meta.env.VITE_BASE_URL)
         if (localStorage.getItem('token')) {
             config.headers.set('Authorization', localStorage.getItem('token'))
         }
@@ -24,7 +24,6 @@ axios.interceptors.request.use(
 
 axios.interceptors.response.use(
     response => {
-        console.log(response)
         if (response.status === 200) {
             return Promise.resolve(response)
         } else {
@@ -33,31 +32,29 @@ axios.interceptors.response.use(
     },
     error => {
         if (error.response) {
+            ElMessage.error(error.response.data.message)
             switch (error.response.status) {
-                case 400:
-                    ElMessage.error('请求错误')
-                    break;
                 case 401:
-                    ElMessage.error('登录过期，请重新登录')
                     localStorage.removeItem('token')
-                    break;
-                case 403:
-                    ElMessage.error('拒绝访问')
-                    break;
-                case 404:
-                    ElMessage.error('请求错误，未找到该资源')
-                    break;
-                case 500:
-                    ElMessage.error('服务器内部错误')
-                    break;
-                default:
-                    ElMessage.error('未知错误')
+                    void router.replace({
+                        path: '/',
+                    })
+                    return Promise.reject(error.response)
             }
+            return Promise.reject(error.response)
         }
     }
 )
 
-export const get = (url: string, params: Object): Promise<Object> => {
+/**
+ * 封装的GET请求
+ *
+ * @param url 请求地址
+ * @param params 请求参数
+ * @return 响应数据
+ * @author ChiyukiRuon
+ * */
+export const get = (url: string, params: object): Promise<response> => {
     return new Promise((resolve, reject) => {
         axios.get(url, {
             params: params,
@@ -69,7 +66,15 @@ export const get = (url: string, params: Object): Promise<Object> => {
     })
 }
 
-export const post = (url: string, params: Object): Promise<Object> => {
+/**
+ * 封装的POST请求
+ *
+ * @param url 请求地址
+ * @param params 请求参数
+ * @return 响应数据
+ * @author ChiyukiRuon
+ * */
+export const post = (url: string, params: object): Promise<response> => {
     return new Promise((resolve, reject) => {
         axios.post(url, params).then(res => {
             resolve(res.data)

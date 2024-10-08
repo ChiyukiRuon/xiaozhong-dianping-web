@@ -17,6 +17,7 @@
         "@vue/language-server": "^2.1.6",
         "axios": "^1.7.7",
         "element-plus": "^2.8.4",
+        "jsencrypt": "^3.3.2",
         "vue": "^3.4.29",
         "vue-router": "^4.3.3",
         "vuex": "^4.0.2"

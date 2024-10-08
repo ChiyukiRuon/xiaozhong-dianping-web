@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isPasswordValid, isUsernameValid } from '@/utils/valid'
+import { auth } from '@/request/api'
+import type { response } from '@/interface/api'
+import { rsa } from '@/utils/rsa'
+import store from '@/store'
+import router from '@/router'
 
 const ruleFormRef = ref<FormInstance>()
+const isLoading = ref(false)
 
 const validateUsername = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
@@ -89,6 +95,30 @@ const resetForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.resetFields()
 }
+
+const login = (username: string, password: string) => {
+    let hashedPassword: string
+    rsa(password).then((hashed) => {
+        if (!hashed) {
+            console.error('RSA加密失败')
+            return
+        }
+        hashedPassword = hashed
+        isLoading.value = true
+
+        auth(username, hashedPassword).then((res: response) => {
+            ElMessage.success(res.message)
+            localStorage.setItem('token', res.data.token)
+            localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+            store.commit('setUserInfo', res.data.user)
+            isLoading.value = false
+            router.push('/dashboard')
+            console.log(localStorage.getItem('token'), store.state.userInfo)
+        }).catch((err: response) => {
+            isLoading.value = false
+        })
+    })
+}
 </script>
 
 <template>
@@ -122,7 +152,7 @@ const resetForm = (formEl: FormInstance | undefined) => {
                 </el-form-item>
                 <el-form-item>
                     <el-button @click="resetForm(ruleFormRef)">注册</el-button>
-                    <el-button type="primary" @click="submitForm(ruleFormRef)">
+                    <el-button type="primary" :loading="isLoading" @click="login(ruleForm.username, ruleForm.password)">
                         登录
                     </el-button>
                 </el-form-item>

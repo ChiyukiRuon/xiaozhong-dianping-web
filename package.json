@@ -13,6 +13,7 @@
         "format": "prettier --write src/"
     },
     "dependencies": {
+        "@element-plus/icons-vue": "^2.3.1",
         "@volar/language-server": "^2.4.5",
         "@vue/language-server": "^2.1.6",
         "axios": "^1.7.7",

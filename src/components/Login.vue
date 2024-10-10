@@ -3,13 +3,14 @@ import { reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isPasswordValid, isUsernameValid } from '@/utils/valid'
 import { auth } from '@/request/api'
-import type { response } from '@/interface/api'
+import type { MenuItem, Response } from '@/interface'
 import { rsa } from '@/utils/rsa'
 import store from '@/store'
 import router from '@/router'
 
 const ruleFormRef = ref<FormInstance>()
 const isLoading = ref(false)
+const isRegister = ref(false)
 
 const validateUsername = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
@@ -84,9 +85,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.validate((valid) => {
         if (valid) {
-            console.log('submit!')
-        } else {
-            console.log('error submit!')
+            login(ruleForm.username, ruleForm.password)
         }
     })
 }
@@ -106,15 +105,19 @@ const login = (username: string, password: string) => {
         hashedPassword = hashed
         isLoading.value = true
 
-        auth(username, hashedPassword).then((res: response) => {
+        auth(username, hashedPassword).then((res: Response) => {
             ElMessage.success(res.message)
+
             localStorage.setItem('token', res.data.token)
             localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+
             store.commit('setUserInfo', res.data.user)
+            store.commit('setPath', res.data.path)
+            store.commit('setRoute', res.data.route)
+
             isLoading.value = false
             router.push('/dashboard')
-            console.log(localStorage.getItem('token'), store.state.userInfo)
-        }).catch((err: response) => {
+        }).catch((err: Response) => {
             isLoading.value = false
         })
     })
@@ -123,26 +126,25 @@ const login = (username: string, password: string) => {
 
 <template>
     <div class="login">
-        <div>
-            <div class="login-title">小众点评</div>
+        <div class="logo-area">
+            <div class="logo-title">小众点评</div>
             <img src="../../public/icon.png" width="200">
         </div>
         <div class="vertical-divider"></div>
-        <div>
+        <div class="form-area">
             <div class="form-title">用户登录</div>
             <el-form
                 ref="ruleFormRef"
-                style="width: 300px"
+                style="width: 350px"
                 :model="ruleForm"
                 status-icon
                 :rules="rules"
                 label-width="auto"
-                class="demo-ruleForm"
             >
-                <el-form-item label="用户名" prop="username">
+                <el-form-item label="用户名" prop="username" class="form-item">
                     <el-input v-model="ruleForm.username" type="text" autocomplete="off" />
                 </el-form-item>
-                <el-form-item label="密码" prop="password">
+                <el-form-item label="密码" prop="password" class="form-item">
                     <el-input
                         v-model="ruleForm.password"
                         type="password"
@@ -150,10 +152,28 @@ const login = (username: string, password: string) => {
                         show-password
                     />
                 </el-form-item>
-                <el-form-item>
-                    <el-button @click="resetForm(ruleFormRef)">注册</el-button>
-                    <el-button type="primary" :loading="isLoading" @click="login(ruleForm.username, ruleForm.password)">
+                <el-form-item v-if="isRegister" label="确认密码" prop="confirm" class="form-item">
+                    <el-input v-model="ruleForm.confirm" type="password" autocomplete="off" />
+                </el-form-item>
+                <el-form-item class="btn-area">
+                    <el-button @click="isRegister = !isRegister" class="btn">
+                        {{ isRegister ? '返回' : '注册' }}
+                    </el-button>
+                    <el-button
+                        type="primary"
+                        :loading="isLoading"
+                        @click="submitForm(ruleFormRef)"
+                        v-if="!isRegister"
+                        class="btn">
                         登录
+                    </el-button>
+                    <el-button
+                        type="primary"
+                        :loading="isLoading"
+                        @click="submitForm(ruleFormRef)"
+                        v-if="isRegister"
+                        class="btn">
+                        注册并登录
                     </el-button>
                 </el-form-item>
             </el-form>
@@ -169,7 +189,6 @@ const login = (username: string, password: string) => {
     height: 100% !important;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
 .vertical-divider {
@@ -179,18 +198,38 @@ const login = (username: string, password: string) => {
     margin: 20px;
 }
 
+.logo-area {
+    margin: 0 20px;
+}
 
-.login-title {
+.logo-title {
     font-size: 1.5vw;
     font-weight: bold;
     color: var(--theme-color);
     text-align: center;
 }
 
+.form-area {
+    margin: 0 20px;
+    width: 380px;
+}
+
 .form-title {
     font-size: 1.5vw;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
     text-align: center;
+}
+
+.form-item {
+    margin-left: 40px;
+}
+
+.btn-area {
+    margin-left: 38px;
+}
+
+.btn {
+    width: 150px;
 }
 
 .footer {

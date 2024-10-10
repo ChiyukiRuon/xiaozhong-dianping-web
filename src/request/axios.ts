@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ElMessage } from 'element-plus'
 import router from '@/router'
-import type { response } from '@/interface/api'
+import type { Response } from '@/interface'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 axios.create({
@@ -54,7 +54,7 @@ axios.interceptors.response.use(
  * @return 响应数据
  * @author ChiyukiRuon
  * */
-export const get = (url: string, params: object): Promise<response> => {
+export const get = (url: string, params: object): Promise<Response> => {
     return new Promise((resolve, reject) => {
         axios.get(url, {
             params: params,
@@ -74,7 +74,7 @@ export const get = (url: string, params: object): Promise<response> => {
  * @return 响应数据
  * @author ChiyukiRuon
  * */
-export const post = (url: string, params: object): Promise<response> => {
+export const post = (url: string, params: object): Promise<Response> => {
     return new Promise((resolve, reject) => {
         axios.post(url, params).then(res => {
             resolve(res.data)

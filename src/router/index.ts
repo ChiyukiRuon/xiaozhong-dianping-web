@@ -11,8 +11,9 @@ const router = createRouter({
         },
         {
             path: '/dashboard',
-            name: '管理面板',
-            component: () => import('../views/Dashboard.vue')
+            name: 'dashboard',
+            component: () => import('../views/Dashboard.vue'),
+            children: []
         },
         {
             path: '/about',

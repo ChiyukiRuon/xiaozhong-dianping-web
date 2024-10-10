@@ -2,24 +2,18 @@
 import { Location } from '@element-plus/icons-vue'
 import { onMounted, ref } from 'vue'
 import Login from '../components/Login.vue'
-import { getPublicKey } from '@/request/api'
 import store from '@/store'
-import type { response } from '@/interface/api'
+import router from '@/router'
 
 const input = ref('')
-const loginView = ref(false)
+const loginView = ref(true)
 const login = () => {
     loginView.value = !loginView.value
 }
 
 onMounted(() => {
-    if (store.state.publicKey === '') {
-        getPublicKey().then((res: response) => {
-            if (res.code === 200) {
-                console.log('获取密钥', res.data.key)
-                store.commit('setPublicKey', res.data.key)
-            }
-        })
+    if (store.state.path !== '/') {
+        router.push(store.state.path)
     }
 })
 </script>
@@ -53,7 +47,12 @@ onMounted(() => {
         </el-main>
     </el-container>
 
-    <el-dialog v-model="loginView" top="25vh" width="820" style="height: 430px">
+    <el-dialog
+        v-model="loginView"
+        :close-on-click-modal="false"
+        top="25vh"
+        width="820"
+        style="height: 430px">
         <Login style="height: 100%;"></Login>
     </el-dialog>
 </template>

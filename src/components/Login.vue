@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isPasswordValid, isUsernameValid } from '@/utils/valid'
-import { auth } from '@/request/api'
+import { authAPI, userAPI } from '@/request/api'
 import type { MenuItem, Response } from '@/interface'
 import { rsa } from '@/utils/rsa'
 import store from '@/store'
@@ -11,13 +11,27 @@ import router from '@/router'
 const ruleFormRef = ref<FormInstance>()
 const isLoading = ref(false)
 const isRegister = ref(false)
+const emits = defineEmits(['close'])
 
 const validateUsername = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
         return callback(new Error('请输入用户名'))
     }
     if (isUsernameValid(value)) {
-        callback()
+        if (isRegister.value) {
+            userAPI.isUsernameAvailable(value).then((res: Response) => {
+                console.log(res.data)
+                if (!res.data.available) {
+                    callback(new Error('用户名已存在'))
+                } else {
+                    callback()
+                }
+            }).catch(() => {
+                callback(new Error('服务器内部错误'))
+            })
+        } else {
+            callback()
+        }
     } else {
         if (value.length < 3 || value.length > 30) {
             callback(new Error('用户名长度应在3到30个字符之间'))
@@ -28,7 +42,6 @@ const validateUsername = (rule: any, value: string, callback: any) => {
         }
     }
 }
-
 const validatePass = (rule: any, value: string, callback: any) => {
     if (value.trim() === '') {
         callback(new Error('请输入密码'))
@@ -74,7 +87,6 @@ const ruleForm = reactive({
     password: '',
     confirm: ''
 })
-
 const rules = reactive<FormRules<typeof ruleForm>>({
     username: [{ validator: validateUsername, trigger: 'blur' }],
     password: [{ validator: validatePass, trigger: 'blur' }],
@@ -85,14 +97,17 @@ const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.validate((valid) => {
         if (valid) {
-            login(ruleForm.username, ruleForm.password)
+            if (isRegister.value) {
+                register(ruleForm.username, ruleForm.password)
+            } else {
+                login(ruleForm.username, ruleForm.password)
+            }
         }
     })
 }
-
 const resetForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
-    formEl.resetFields()
+    formEl.clearValidate()
 }
 
 const login = (username: string, password: string) => {
@@ -105,7 +120,7 @@ const login = (username: string, password: string) => {
         hashedPassword = hashed
         isLoading.value = true
 
-        auth(username, hashedPassword).then((res: Response) => {
+        authAPI.auth(username, hashedPassword).then((res: Response) => {
             ElMessage.success(res.message)
 
             localStorage.setItem('token', res.data.token)
@@ -116,11 +131,41 @@ const login = (username: string, password: string) => {
             store.commit('setRoute', res.data.route)
 
             isLoading.value = false
-            router.push('/dashboard')
-        }).catch((err: Response) => {
+            emits('close')
+            router.push(res.data.path)
+        }).catch(() => {
             isLoading.value = false
         })
     })
+}
+const register = (username: string, password: string) => {
+    let hashedPassword: string
+    rsa(password).then((hashed) => {
+        if (!hashed) {
+            console.error('RSA加密失败')
+            return
+        }
+        hashedPassword = hashed
+        isLoading.value = true
+
+        userAPI.register(username, hashedPassword).then((res: Response) => {
+            ElMessage.success(res.message)
+
+            localStorage.setItem('token', res.data.token)
+            localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+
+            store.commit('setUserInfo', res.data.user)
+            store.commit('setPath', res.data.path)
+            store.commit('setRoute', res.data.route)
+
+            isLoading.value = false
+            emits('close')
+            router.push('/')
+        }).catch(() => {
+            isLoading.value = false
+        })
+    })
+
 }
 </script>
 
@@ -132,7 +177,11 @@ const login = (username: string, password: string) => {
         </div>
         <div class="vertical-divider"></div>
         <div class="form-area">
-            <div class="form-title">用户登录</div>
+            <div class="form-title" :style="isRegister ? 'margin-bottom: 6px' : ''">
+                <div :style="isRegister ? 'color: #000000' : 'color: #7CB8F2'">用户登录</div>
+                <div class="vertical-divider" style="height: 30px; margin: 10px"></div>
+                <div :style="isRegister ? 'color: #7CB8F2' : 'color: #000000'">用户注册</div>
+            </div>
             <el-form
                 ref="ruleFormRef"
                 style="width: 350px"
@@ -155,8 +204,8 @@ const login = (username: string, password: string) => {
                 <el-form-item v-if="isRegister" label="确认密码" prop="confirm" class="form-item">
                     <el-input v-model="ruleForm.confirm" type="password" autocomplete="off" />
                 </el-form-item>
-                <el-form-item class="btn-area">
-                    <el-button @click="isRegister = !isRegister" class="btn">
+                <el-form-item class="btn-area" :style="isRegister ? 'margin-top: 19px' : ''">
+                    <el-button @click="isRegister = !isRegister;resetForm(ruleFormRef)" class="btn">
                         {{ isRegister ? '返回' : '注册' }}
                     </el-button>
                     <el-button
@@ -180,7 +229,7 @@ const login = (username: string, password: string) => {
         </div>
     </div>
     <div class="footer">
-        想要成为商家？<a href="/register">点此注册</a>
+        想要成为商家？<a href="/apply">点此注册</a>
     </div>
 </template>
 
@@ -210,13 +259,15 @@ const login = (username: string, password: string) => {
 }
 
 .form-area {
-    margin: 0 20px;
+    margin: 0 45px;
     width: 380px;
 }
 
 .form-title {
+    display: flex;
     font-size: 1.5vw;
-    margin-bottom: 50px;
+    justify-content: center;
+    margin-bottom: 25px;
     text-align: center;
 }
 
@@ -225,6 +276,7 @@ const login = (username: string, password: string) => {
 }
 
 .btn-area {
+    margin-top: 50px;
     margin-left: 38px;
 }
 

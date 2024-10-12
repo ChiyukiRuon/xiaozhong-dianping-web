@@ -7,3 +7,28 @@ body {
 a {
     color: var(--theme-color);
 }
+
+.header {
+    display: flex;
+    background-color: #7CB8F2;
+    color: #333;
+    line-height: 70px;
+}
+
+.header div {
+    display: flex;
+    align-items: center;
+}
+
+.title {
+    margin-left: 1vw;
+    font-size: 1.5vw;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.sub-title {
+    margin-left: 1vw;
+    font-size: 1vw;
+    color: #FFFFFF;
+}

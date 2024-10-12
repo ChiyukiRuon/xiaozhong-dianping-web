@@ -4,9 +4,10 @@ import { onMounted, ref } from 'vue'
 import Login from '../components/Login.vue'
 import store from '@/store'
 import router from '@/router'
+import { logout } from '@/utils/common'
 
 const input = ref('')
-const loginView = ref(true)
+const loginView = ref(false)
 const login = () => {
     loginView.value = !loginView.value
 }
@@ -37,13 +38,26 @@ onMounted(() => {
                 </el-input>
             </div>
             <div class="right">
-                <div class="login-btn" @click.prevent="login">
-                    登录/注册
+                <div class="login-btn" @click="login()" v-if="Object.keys(store.state.userInfo).length === 0">登录/注册</div>
+                <div v-else>
+                    <el-popover :offset="2">
+                        <template #reference>
+                            <div>
+                                <div class="user-info" @click.prevent="">
+                                    {{ store.state.userInfo.nickname || store.state.userInfo.username }}
+                                </div>
+                                <img class="avatar" :src="store.state.userInfo.avatar" alt="avatar" width="45vw"/>
+                            </div>
+                        </template>
+                        <template #default>
+                            <el-button type="danger" @click="logout()" style="width: 100%">退出</el-button>
+                        </template>
+                    </el-popover>
                 </div>
             </div>
         </el-header>
         <el-main style="height: 100%">
-            <Login></Login>
+
         </el-main>
     </el-container>
 
@@ -53,7 +67,7 @@ onMounted(() => {
         top="25vh"
         width="820"
         style="height: 430px">
-        <Login style="height: 100%;"></Login>
+        <Login @close="loginView = false" style="height: 100%;"></Login>
     </el-dialog>
 </template>
 
@@ -136,5 +150,26 @@ onMounted(() => {
     color: #FFFFFF;
     box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.2);
     transition: 0.5s;
+}
+
+.user-info {
+    width: auto;
+    height: 30px;
+    padding: 0 2vw 0 20px;
+    background-color: #FFFFFF;
+    border-radius: 50px;
+    color: var(--theme-color);
+    font-size: 1vw;
+    letter-spacing: 2px;
+    transition: 0.5s;
+    z-index: 1;
+}
+
+.right img {
+    position: relative;
+    right: 1.5vw;
+    border: 2px solid #FFFFFF;
+    border-radius: 100%;
+    z-index: 4;
 }
 </style>

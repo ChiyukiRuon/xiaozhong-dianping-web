@@ -1,5 +1,5 @@
-import { get, post } from './axios'
 import type { Response } from '@/interface'
+import { get, post } from '@/request/axios'
 
 export const getPublicKey = (): Promise<Response> => get('/key', {})    // 获取公钥
 export const getRoute = (): Promise<Response> => get('/route', {})    // 获取用户路由

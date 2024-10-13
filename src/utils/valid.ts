@@ -12,6 +12,19 @@ export const isUsernameValid = (username: string): boolean => {
 }
 
 /**
+ * 检查昵称合法性
+ *
+ * @param {String} nickname 昵称
+ * @returns {Boolean} 返回 true 表示昵称合法，false 表示不合法
+ * @author ChiyukiRuon
+ * */
+export const isNicknameValid = (nickname: string): boolean => {
+    // 昵称长度应在 3 到 30 个字符之间，且只包含中日英文字母数字和括号
+    const nicknameRegex = /^(?!.*[^\u4e00-\u9fa5a-zA-Z0-9（）()]).{3,30}$/
+    return nicknameRegex.test(nickname)
+}
+
+/**
  * 检查密码合法性
  *
  * @param {String} password 密码

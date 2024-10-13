@@ -25,3 +25,11 @@ export type MenuItem = {
     path: string
     component: string
 }
+
+export type Region = {
+    id: number
+    p_code: number
+    code: number
+    name: string
+    level: number
+}

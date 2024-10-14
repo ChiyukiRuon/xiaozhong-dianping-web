@@ -28,6 +28,8 @@ onMounted(() => {
     if (!token) {
         ElMessage.warning('未登录，请先登录')
         router.push('/')
+    } else if (store.state.path !== '/') {
+        router.push(store.state.path)
     }
 })
 </script>

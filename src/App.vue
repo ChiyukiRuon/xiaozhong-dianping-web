@@ -13,7 +13,6 @@ onMounted(() => {
     if (store.state.publicKey === '') {
         authAPI.getPublicKey().then((res: Response) => {
             if (res.code === 200) {
-                console.log('获取密钥', res.data.key)
                 store.commit('setPublicKey', res.data.key)
             }
         })
@@ -21,7 +20,6 @@ onMounted(() => {
 
     if (Object.keys(JSON.parse(userInfo)).length !== 0 && token) {
         authAPI.getRoute().then((res: Response) => {
-            console.log(res)
             store.commit('setPath', res.data.path)
             store.commit('setRoute', res.data.route)
             router.push(res.data.path)

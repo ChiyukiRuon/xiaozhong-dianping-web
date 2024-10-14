@@ -83,3 +83,25 @@ export const post = (url: string, params: object): Promise<Response> => {
         })
     })
 }
+
+/**
+ * 封装的PUT请求
+ *
+ * @param url 请求地址
+ * @param params 请求参数
+ * @return 响应数据
+ * @author ChiyukiRuon
+ * */
+export const put = (url: string, params: object): Promise<Response> => {
+    return new Promise((resolve, reject) => {
+        axios.put(url, params, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        }).then(res => {
+            resolve(res.data)
+        }).catch(err => {
+            reject(err)
+        })
+    })
+}

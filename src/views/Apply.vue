@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowRightBold, Check, Edit, Upload, UploadFilled, User } from '@element-plus/icons-vue'
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { type CascaderProps, ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isEmailValid, isNicknameValid, isPasswordValid, isUsernameValid } from '@/utils/valid'
 import { commonAPI, authAPI, userAPI, merchantAPI } from '@/request/api'
@@ -8,9 +8,11 @@ import type { Region, Response } from '@/interface'
 import { rsa } from '@/utils/rsa'
 import store from '@/store'
 import router from '@/router'
+import { logout } from '@/utils/common'
 
 let step = ref(0)
 
+const CDN_URL = import.meta.env.VITE_CDN_URL
 const registerFormRef = ref<FormInstance>()
 const detailFormRef = ref<FormInstance>()
 const isLoading = ref(false)
@@ -35,6 +37,24 @@ const props: CascaderProps = {
     },
 }
 
+// 表单数据
+const registerForm = reactive({
+    username: '',
+    password: '',
+    confirm: ''
+})
+const detailForm = reactive({
+    avatar: `${CDN_URL}/avatar/default.jpg`,
+    nickname: '',
+    intro: '',
+    phone: '',
+    email: '',
+    region: [],
+    address: '',
+    annex: ''
+})
+
+// 表单校验规则
 const validateUsername = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
         return callback(new Error('请输入用户名'))
@@ -141,10 +161,8 @@ const validateEmail = (rule: any, value: string, callback: any) => {
     }
 }
 const validateRegion = (rule: any, value: string[], callback: any) => {
-    if (Object.keys(value).length === 0) {
+    if (value.length !== 4) {
         callback(new Error('请选择所在地'))
-    } else if (value) {
-
     } else {
         callback()
     }
@@ -156,21 +174,6 @@ const validateAddress = (rule: any, value: string, callback: any) => {
         callback()
     }
 }
-
-const registerForm = reactive({
-    username: '',
-    password: '',
-    confirm: ''
-})
-const detailForm = reactive({
-    avatar: '',
-    nickname: '',
-    intro: '',
-    phone: '',
-    email: '',
-    region: [],
-    address: '',
-})
 
 const registerRules = reactive<FormRules<typeof registerForm>>({
     username: [{ validator: validateUsername, trigger: 'blur' }],
@@ -186,6 +189,7 @@ const detailRules = reactive<FormRules<typeof detailForm>>({
     address: [{ validator: validateAddress, trigger: 'blur' }]
 })
 
+// 注册表单提交
 const submitRegister = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.validate((valid) => {
@@ -194,7 +198,23 @@ const submitRegister = (formEl: FormInstance | undefined) => {
         }
     })
 }
+const submitDetail = (formEl: FormInstance | undefined) => {
+    if (!formEl) return
+    formEl.validate((valid) => {
+        if (valid) {
+            step.value++
+        }
+    })
+}
+const submitApply = () => {
+    if (detailForm.annex === '') {
+        ElMessage.warning('请上传营业执照')
+    } else {
+        apply(detailForm)
+    }
+}
 
+// API请求
 const register = (username: string, password: string) => {
     let hashedPassword: string
     rsa(password).then((hashed) => {
@@ -223,6 +243,54 @@ const register = (username: string, password: string) => {
     })
 
 }
+const apply = (formData: any) => {
+    const { address, region } = formData
+    const completeAddress = `${region.join(' ')} ${address}`
+
+    isLoading.value = true
+    merchantAPI.apply(formData.avatar, formData.nickname, formData.intro, formData.phone, formData.email, completeAddress, formData.annex).then((res: Response) => {
+        isLoading.value = false
+        step.value++
+    }).catch(() => {
+        isLoading.value = false
+    })
+}
+const uploadAvatar = (file: any) => {
+    merchantAPI.uploadFile(file.file, 'avatar').then((res: Response) => {
+        detailForm.avatar = `${CDN_URL}${res.data.url}`
+    })
+}
+const uploadAnnex = (file: any) => {
+    merchantAPI.uploadFile(file.file, 'annex').then((res: Response) => {
+        detailForm.annex = `${CDN_URL}${res.data.url}`
+    })
+}
+
+/**
+ * 返回首页
+ *
+ * @return void
+ * @author ChiyukiRuon
+ * */
+const backToHome = () => {
+    logout()
+    router.push('/')
+}
+
+onMounted(() => {
+    if (localStorage.getItem('token')) {
+        const userInfo = store.state.userInfo
+        if (userInfo.role !== 'merchant') {
+            backToHome()
+        } else if (userInfo.status === 1) {
+            step.value = 4
+        } else if (userInfo.status === 4 || userInfo.status === 5) {
+            step.value = 1
+        } else {
+            backToHome()
+        }
+    }
+})
 </script>
 
 <template>
@@ -273,7 +341,6 @@ const register = (username: string, password: string) => {
                         <el-icon><ArrowRightBold /></el-icon>
                     </el-button>
                 </div>
-                <el-button @click="step++">下一页</el-button>
             </div>
             <div v-else-if="step === 1">
                 <el-form
@@ -284,13 +351,18 @@ const register = (username: string, password: string) => {
                     label-width="auto"
                     style="width: 400px">
                     <el-form-item label="" prop="avatar">
-                        <!-- TODO 上传头像 -->
-                        <el-upload style="display: flex; flex-direction: column; width: 100%">
+                        <el-upload
+                            style="display: flex;
+                            flex-direction: column; width: 100%"
+                            accept="image/jpeg, image/png"
+                            :show-file-list="false"
+                            :http-request="uploadAvatar"
+                        >
                             <template #trigger>
                                 <div class="image-container"
                                      @mouseover="hoverTextVisible = true"
                                      @mouseleave="hoverTextVisible = false">
-                                    <img class="avatar" :src="'http://cdn.dianping.chiyukiruon.top/avatar/default.jpg'" alt="avatar" />
+                                    <img class="avatar" :src="detailForm.avatar" alt="avatar" />
                                     <div class="overlay" v-if="hoverTextVisible">
                                         <el-icon size="20"><UploadFilled /></el-icon>
                                     </div>
@@ -328,17 +400,34 @@ const register = (username: string, password: string) => {
                         <el-input v-model="detailForm.address" placeholder="详细地址" />
                     </el-form-item>
                 </el-form>
-                <el-button @click="step++">下一页</el-button>
+                <div class="btn-area">
+                    <el-button
+                        type="primary"
+                        :loading="isLoading"
+                        @click="submitDetail(detailFormRef)"
+                        class="btn">
+                        下一步
+                        <el-icon><ArrowRightBold /></el-icon>
+                    </el-button>
+                </div>
             </div>
             <div v-else-if="step === 2">
                 <el-upload
                     class="drag-upload"
                     drag
                     style="width: 400px"
+                    accept="image/jpeg, image/png"
+                    :show-file-list="false"
+                    :http-request="uploadAnnex"
                 >
-                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                    <div class="el-upload__text">
-                        将文件拖到这里或 <em>点击上传</em>
+                    <div v-if="detailForm.annex === ''">
+                        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                        <div class="el-upload__text">
+                            将文件拖到这里或 <em>点击上传</em>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <img :src="detailForm.annex" alt="annex" style="width: 100%" />
                     </div>
                     <template #tip>
                         <div class="el-upload__tip">
@@ -346,12 +435,31 @@ const register = (username: string, password: string) => {
                         </div>
                     </template>
                 </el-upload>
-                <el-button @click="step++">下一页</el-button>
+                <div class="btn-area">
+                    <el-button
+                        type="primary"
+                        :loading="isLoading"
+                        @click="submitApply"
+                        class="btn">
+                        下一步
+                        <el-icon><ArrowRightBold /></el-icon>
+                    </el-button>
+                </div>
             </div>
             <div v-else>
-                <div>注册成功</div>
-                <el-button @click="step = 0">重置</el-button>
+                <el-result
+                    icon="success"
+                    title="申请提交成功"
+                    sub-title="请等待我们的审核"
+                >
+                    <template #extra>
+                        <el-button type="primary" @click="backToHome">返回首页</el-button>
+                    </template>
+                </el-result>
             </div>
+            <el-button @click="step++">下一页</el-button>
+            <el-button @click="step--">上一页</el-button>
+            <el-button @click="step = 0">重置</el-button>
         </el-main>
     </el-container>
 </template>
@@ -373,6 +481,7 @@ const register = (username: string, password: string) => {
 
 .avatar {
     width: 5vw;
+    height: 5vw;
     border-radius: 50%;
 }
 

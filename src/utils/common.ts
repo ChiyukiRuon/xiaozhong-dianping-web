@@ -13,3 +13,33 @@ export const logout = () => {
     void router.replace('/')
     router.addRoute({ path: '/dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue')})
 }
+
+/**
+ * 审核类型格式化
+ *
+ * @param type 审核类型
+ * @return 格式化后的审核类型
+ * @author ChiyukiRuon
+ * */
+export const formatVerificationType = (type: string): string => {
+    switch (type) {
+        case 'register':
+            return '商家申请'
+        case 'nickname':
+            return '昵称违规'
+        case 'avatar':
+            return '头像违规'
+        case 'intro':
+            return '简介违规'
+        case 'phone':
+            return '手机号无效'
+        case 'email':
+            return '邮箱无效'
+        case 'address':
+            return '地址无效'
+        case 'annex':
+            return '资质无效'
+        default:
+            return type
+    }
+}

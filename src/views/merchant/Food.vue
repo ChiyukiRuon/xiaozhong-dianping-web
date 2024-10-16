@@ -24,23 +24,31 @@ let filterValue = ref({
 
 // 配置项
 const columns = ref([
-    { label: '用户名', prop: 'username' },
-    { label: '昵称', prop: 'nickname' },
-    { label: '审核项目', prop: 'detail' },
-    { label: '审核备注', prop: 'verifyRemark' }
+    { label: '封面', prop: 'cover' },
+    { label: '美食名', prop: 'username' },
+    { label: '评分', prop: 'score' },
+    { label: '分类', prop: 'category' },
+    { label: '价格', prop: 'price' },
+    { label: '状态', prop: 'status' },
 ])
 const filterOptions = ref([
-    { label: '用户名', field: 'username', type: 'text' },
-    { label: '昵称', field: 'nickname', type: 'text' },
+    { label: '美食名', field: 'name', type: 'text' },
     {
-        label: '审核项目',
-        field: 'detail',
+        label: '分类',
+        field: 'category',
+        type: 'select',
+        props: {
+            options: []
+        }
+    },
+    {
+        label: '状态',
+        field: 'status',
         type: 'select',
         props: {
             options: [
-                { label: '头像违规', value: 'avatar' },
-                { label: '昵称违规', value: 'nickname' },
-                { label: '简介违规', value: 'intro' },
+                { label: '上架', value: 0 },
+                { label: '下架', value: 1 },
             ]
         }
     }
@@ -72,7 +80,7 @@ const isRemarkValid = (remark: string): boolean => {
 // 筛选器回调
 const handleFilter = (data: any) => {
     filterValue.value = data
-    getUnverifiedUserList(current.value, size.value, data.username, data.nickname, data.detail)
+    getFoodList(current.value, size.value, data.username, data.nickname, data.detail)
 }
 const handleFilterClear = () => {
     filterValue.value = {
@@ -80,15 +88,15 @@ const handleFilterClear = () => {
         nickname: '',
         detail: ''
     }
-    getUnverifiedUserList(current.value, size.value)
+    getFoodList(current.value, size.value)
 }
 
 // 分页器回调
 const handleSizeChange = (size: number) => {
-    getUnverifiedUserList(current.value, size, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+    getFoodList(current.value, size, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
 }
 const handleCurrentChange = (page: number) => {
-    getUnverifiedUserList(page, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+    getFoodList(page, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
 }
 
 /**
@@ -102,7 +110,7 @@ const handleCurrentChange = (page: number) => {
  * @return void
  * @author ChiyukiRuon
  * */
-const getUnverifiedUserList = (page: number, pageSize: number, username: string = '', nickname: string = '', detail: string = '') => {
+const getFoodList = (page: number, pageSize: number, username: string = '', nickname: string = '', detail: string = '') => {
     adminAPI.unverifiedUserList(page, pageSize, username, nickname, detail).then((res: Response) => {
         tableData.value = res.data.userList.map((item: any) => ({
             ...item,
@@ -133,7 +141,7 @@ const verifyUser = (id: number, uid: number, approve: number, remark: string = '
         .then(() => {
             dialogVisible.value = false
             isLoading.value[approve] = false
-            getUnverifiedUserList(current.value, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+            getFoodList(current.value, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
         })
         .catch(() => {
             isLoading.value[approve] = false
@@ -141,7 +149,7 @@ const verifyUser = (id: number, uid: number, approve: number, remark: string = '
 }
 
 onMounted(() => {
-    getUnverifiedUserList(current.value, size.value)
+    // getUnverifiedUserList(current.value, size.value)
 })
 </script>
 
@@ -149,6 +157,9 @@ onMounted(() => {
     <div class="container">
         <div class="top-part">
             <Filter :filters="filterOptions" @apply-filters="handleFilter" @reset-filters="handleFilterClear" />
+            <div class="operate-btn">
+                <el-button type="primary" @click="">新增</el-button>
+            </div>
             <Table :columns="columns" :table-data="tableData">
                 <template v-slot:action>
                     <el-table-column label="操作" width="150" align="center">
@@ -228,6 +239,12 @@ onMounted(() => {
 .bottom-part {
     margin-top: auto;
     margin-left: auto;
+}
+
+.operate-btn {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
 }
 
 .btn-area {

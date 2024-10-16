@@ -16,7 +16,11 @@ let size = ref(10)
 
 let tableData = ref([])
 let dialogValue = ref()
-let filterValue = ref()
+let filterValue = ref({
+    username: '',
+    nickname: '',
+    detail: ''
+})
 
 // 配置项
 const columns = ref([
@@ -35,7 +39,9 @@ const filterOptions = ref([
         props: {
             options: [
                 { label: '商家申请', value: 'register' },
-                { label: '昵称违规', value: 'nickname' },
+                { label: '头像违规', value: 'avatar' },
+                { label: '商家名违规', value: 'nickname' },
+                { label: '简介违规', value: 'intro' },
                 { label: '邮箱无效', value: 'email' },
                 { label: '手机号无效', value: 'phone' },
                 { label: '地址无效', value: 'address' },
@@ -74,7 +80,11 @@ const handleFilter = (data: any) => {
     getUnverifiedMerchantList(current.value, size.value, data.username, data.nickname, data.detail)
 }
 const handleFilterClear = () => {
-    filterValue.value = {}
+    filterValue.value = {
+        username: '',
+        nickname: '',
+        detail: ''
+    }
     getUnverifiedMerchantList(current.value, size.value)
 }
 
@@ -82,8 +92,8 @@ const handleFilterClear = () => {
 const handleSizeChange = (size: number) => {
     getUnverifiedMerchantList(current.value, size, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
 }
-const handleCurrentChange = (current: number) => {
-    getUnverifiedMerchantList(current, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+const handleCurrentChange = (page: number) => {
+    getUnverifiedMerchantList(page, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
 }
 
 /**
@@ -114,7 +124,7 @@ const getUnverifiedMerchantList = (page: number, pageSize: number, username: str
 /**
  * 审核商家
  *
- * @param id 商家id
+ * @param id 记录id
  * @param uid 用户id
  * @param approve 审核结果
  * @param remark 审核备注
@@ -126,9 +136,9 @@ const verifyMerchant = (id: number, uid: number, approve: number, remark: string
     adminAPI
         .verifyMerchant(id, uid, approve, remark)
         .then(() => {
-            getUnverifiedMerchantList(current.value, size.value)
             dialogVisible.value = false
             isLoading.value[approve] = false
+            getUnverifiedMerchantList(current.value, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
         })
         .catch(() => {
             isLoading.value[approve] = false

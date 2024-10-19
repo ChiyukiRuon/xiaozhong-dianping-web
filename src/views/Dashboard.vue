@@ -6,6 +6,7 @@ import { logout } from '@/utils/common'
 import { onMounted } from 'vue'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
+import FoodCard from '@/components/FoodCard.vue'
 
 const userRoute: MenuItem[] = store.state.route
 const userInfo: UserInfo = store.state.userInfo
@@ -73,6 +74,7 @@ onMounted(() => {
                     </el-menu>
                 </el-aside>
                 <el-main>
+<!--                    <FoodCard size="small" :food-info="{ cover: 'http://cdn.dianping.chiyukiruon.top/avatar/1728023592342-PG0c0MMI.jpg', name: 'asd', intro: 'sajdashdadahflshfalgflauihdalhwadhfliahuijdlaj' }" />-->
                     <router-view />
                 </el-main>
             </el-container>

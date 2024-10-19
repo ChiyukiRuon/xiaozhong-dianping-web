@@ -64,7 +64,6 @@ const rejectRemark = () => {
         .catch(() => {})
 }
 const isRemarkValid = (remark: string): boolean => {
-    console.log(remark)
     if (!remark) return false
     return remark.trim().length > 0
 }

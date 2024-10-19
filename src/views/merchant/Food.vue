@@ -1,33 +1,73 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import Table from '@/components/Table.vue'
-import { ElButton, ElMessageBox } from 'element-plus'
+import { ElButton, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import type { Response } from '@/interface'
-import { formatVerificationType } from '@/utils/common'
-import { adminAPI } from '@/request/api'
+import { formatStatus, formatVerificationType } from '@/utils/common'
+import { merchantAPI } from '@/request/api'
 import Filter from '@/components/Filter.vue'
+import { Picture } from '@element-plus/icons-vue'
+import { isNicknameValid } from '@/utils/valid'
 
-let isLoading = ref([false, false])   // 0: 拒绝 1: 通过
+const CDN_URL = import.meta.env.VITE_CDN_URL
+
+let isLoading = ref(false)
 let dialogVisible = ref(false)
+let hoverTextVisible = ref(false)
 
 let total = ref(0)
 let current = ref(1)
 let size = ref(10)
+let detailFormRef = ref<FormInstance>()
 
 let tableData = ref([])
 let dialogValue = ref()
 let filterValue = ref({
-    username: '',
-    nickname: '',
-    detail: ''
+    name: '',
+    category: null,
+    status: null
+})
+let detailForm = reactive({
+    cover: `${CDN_URL}/cover/default.jpg`,
+    name: '',
+    intro: '',
+    category: null,
+    price: 0.00,
+})
+
+// 表单合法性检查
+const validateName = (rule: any, value: string, callback: any) => {
+    if (!value.trim()) {
+        return callback(new Error('请输入美食名称'))
+    }
+    if (isNicknameValid(value)) {
+        callback()
+    } else {
+        if (value.length < 3 || value.length > 10) {
+            callback(new Error('美食名称长度应在3到10个字符之间'))
+        } else {
+            callback(new Error('美食名称含有非法字符'))
+        }
+    }
+}
+const validateIntro = (rule: any, value: string, callback: any) => {
+    if (value.length > 100) {
+        callback(new Error('美食简介长度不能超过100个字符'))
+    } else {
+        callback()
+    }
+}
+
+const detailRules = reactive<FormRules<typeof detailForm>>({
+    name: [{ validator: validateName, trigger: 'blur' }],
+    intro: [{ validator: validateIntro, trigger: 'blur' }],
 })
 
 // 配置项
 const columns = ref([
-    { label: '封面', prop: 'cover' },
-    { label: '美食名', prop: 'username' },
+    { label: '美食名', prop: 'name' },
     { label: '评分', prop: 'score' },
-    { label: '分类', prop: 'category' },
+    { label: '分类', prop: 'categoryName' },
     { label: '价格', prop: 'price' },
     { label: '状态', prop: 'status' },
 ])
@@ -47,109 +87,184 @@ const filterOptions = ref([
         type: 'select',
         props: {
             options: [
-                { label: '上架', value: 0 },
-                { label: '下架', value: 1 },
+                { label: '上架', value: 1 },
+                { label: '下架', value: 0 },
             ]
         }
     }
 ])
 
-// 审核弹窗
-const showDialog = (row: any) => {
-    dialogValue.value = row
-    dialogVisible.value = true
-}
-const rejectRemark = () => {
-    ElMessageBox.prompt('请输入拒绝理由', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValidator: isRemarkValid,
-        inputErrorMessage: '请输入拒绝理由'
-    })
-        .then(({ value }) => {
-            verifyUser(dialogValue.value.id, dialogValue.value.user.uid, 0, value)
-        })
-        .catch(() => {})
-}
-const isRemarkValid = (remark: string): boolean => {
-    console.log(remark)
-    if (!remark) return false
-    return remark.trim().length > 0
-}
-
 // 筛选器回调
 const handleFilter = (data: any) => {
     filterValue.value = data
-    getFoodList(current.value, size.value, data.username, data.nickname, data.detail)
+    getFoodList(current.value, size.value, data.name, data.category, data.status)
 }
 const handleFilterClear = () => {
     filterValue.value = {
-        username: '',
-        nickname: '',
-        detail: ''
+        name: '',
+        category: null,
+        status: null
     }
     getFoodList(current.value, size.value)
 }
 
 // 分页器回调
 const handleSizeChange = (size: number) => {
-    getFoodList(current.value, size, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+    getFoodList(current.value, size, filterValue.value.name, filterValue.value.category, filterValue.value.status)
 }
 const handleCurrentChange = (page: number) => {
-    getFoodList(page, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+    getFoodList(page, size.value, filterValue.value.name, filterValue.value.category, filterValue.value.status)
 }
 
+// 刷新页面数据
+const refresh = () => {
+    getFoodList(current.value, size.value, filterValue.value.name, filterValue.value.category, filterValue.value.status)
+}
+// 分类格式化
+const formatCategory = (category: number): string => {
+    const categoryItem = filterOptions.value[1].props!.options.find((item) => item.value == category)
+
+   return categoryItem ? categoryItem.label : '无'
+}
+
+// 按钮功能
+// 上架/下架
+const handleShelf = (row: any, status: number) => {
+    console.log(row)
+    editFoodInfo('', '', null, row.category, status, row.id)
+}
+// 删除
+const handleDelete = (row: any) => {
+    ElMessageBox.confirm(
+        `确定要删除美食“${row.name}”吗`,
+        '删除美食',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        }
+    )
+        .then(() => {
+            merchantAPI.deleteFood(row.id).then(() => {
+                refresh()
+            })
+        })
+
+}
+// 编辑食品/食品详情
+const showDetail = (row: any) => {
+    dialogValue.value = row
+    detailForm.name = row.name
+    detailForm.intro = row.intro
+    detailForm.category = row.category
+    detailForm.price = row.price
+    detailForm.cover = row.cover
+    dialogVisible.value = true
+}
+// 添加美食
+const showAdd = () => {
+    dialogValue.value = {}
+    detailForm.name = ''
+    detailForm.intro = ''
+    detailForm.category = null
+    detailForm.price = 0.00
+    detailForm.cover = `${CDN_URL}/cover/default.jpg`
+    dialogVisible.value = true
+}
+// 提交表单
+const submitDetail = (formEl: FormInstance | undefined) => {
+    if (!formEl) return
+    formEl.validate((valid) => {
+        if (valid) {
+            if (detailForm.category === '无') detailForm.category = null
+            editFoodInfo(detailForm.name, detailForm.intro, detailForm.price, detailForm.category??null, dialogValue.value.status?null:0, dialogValue.value.id??null)
+        }
+    })
+}
+
+// 请求
 /**
- * 获取未审核用户列表
+ * 获取食品列表
  *
  * @param page 页码
  * @param pageSize 每页数量
- * @param username 搜索词
- * @param nickname 搜索词
- * @param detail 搜索词
+ * @param name 搜索词
+ * @param category 搜索词
+ * @param status 搜索词
  * @return void
  * @author ChiyukiRuon
  * */
-const getFoodList = (page: number, pageSize: number, username: string = '', nickname: string = '', detail: string = '') => {
-    adminAPI.unverifiedUserList(page, pageSize, username, nickname, detail).then((res: Response) => {
-        tableData.value = res.data.userList.map((item: any) => ({
+const getFoodList = (page: number, pageSize: number, name: string = '', category: number | null = null, status: number | null = null) => {
+    merchantAPI.getFood(page, pageSize, name, category, status).then((res: Response) => {
+        tableData.value = res.data.foodList.map((item: any) => ({
             ...item,
-            username: item.user.username,
-            nickname: item.user.nickname,
-            detail: formatVerificationType(item.detail)
+            status: formatStatus(item.status),
+            price: parseFloat(item.price),
+            category: item.category?parseInt(item.category):'',
+            categoryName: formatCategory(item.category)
         }))
         total.value = res.data.total
         current.value = res.data.current
         size.value = res.data.size
     })
 }
-
 /**
- * 审核用户
+ * 获取分类列表
  *
- * @param id 记录id
- * @param uid 用户id
- * @param approve 审核结果
- * @param remark 审核备注
  * @return void
  * @author ChiyukiRuon
  * */
-const verifyUser = (id: number, uid: number, approve: number, remark: string = '') => {
-    isLoading.value[approve] = true
-    adminAPI
-        .verifyUser(id, uid, approve, remark)
+const getCategoryList = () => {
+    merchantAPI.getAllCategory().then((res: Response) => {
+        const categoryList = res.data?.categoryList || []
+
+        filterOptions.value[1].props!.options = categoryList.map((item: any) => ({
+            label: item.label,
+            value: item.value
+        }))
+    })
+}
+/**
+ * 编辑食物信息
+ *
+ * @param name 名称
+ * @param intro 简介
+ * @param price 价格
+ * @param category 分类
+ * @param status 上架状态
+ * @param [id] 食物ID
+ * @return void
+ * @author ChiyukiRuon
+ * */
+const editFoodInfo = (name = '', intro = '', price: number | null = null, category: number | null, status: number | null = null, id: number | null = null) => {
+    isLoading.value = true
+    merchantAPI
+        .editFood(name, intro, price, category, status, id)
         .then(() => {
             dialogVisible.value = false
-            isLoading.value[approve] = false
-            getFoodList(current.value, size.value, filterValue.value.username, filterValue.value.nickname, filterValue.value.detail)
+            isLoading.value = false
+            refresh()
         })
         .catch(() => {
-            isLoading.value[approve] = false
+            isLoading.value = false
         })
+}
+/**
+ * 上传封面
+ *
+ * @param file 文件对象
+ * @return void
+ * @author ChiyukiRuon
+ * */
+const uploadCover = (file: any) => {
+    merchantAPI.uploadFile(file.file, 'cover').then((res: Response) => {
+        detailForm.cover = `${CDN_URL}${res.data.url}`
+    })
 }
 
 onMounted(() => {
-    // getUnverifiedUserList(current.value, size.value)
+    getCategoryList()
+    getFoodList(current.value, size.value)
 })
 </script>
 
@@ -158,13 +273,21 @@ onMounted(() => {
         <div class="top-part">
             <Filter :filters="filterOptions" @apply-filters="handleFilter" @reset-filters="handleFilterClear" />
             <div class="operate-btn">
-                <el-button type="primary" @click="">新增</el-button>
+                <el-button type="primary" @click="showAdd">新增</el-button>
             </div>
             <Table :columns="columns" :table-data="tableData">
                 <template v-slot:action>
-                    <el-table-column label="操作" width="150" align="center">
+                    <el-table-column label="封面" width="200" align="center">
                         <template v-slot="{ row }">
-                            <el-link type="primary" @click="showDialog(row)">详情</el-link>
+                            <img style="height: 40px" :src="row.cover" alt="cover">
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="200" align="center">
+                        <template v-slot="{ row }">
+                            <el-link type="primary" @click="" class="link-btn" v-if="row.status === '已下架'" @click.prevent="handleShelf(row, 1)">上架</el-link>
+                            <el-link type="primary" @click="" class="link-btn" v-if="row.status === '已上架'" @click.prevent="handleShelf(row, 0)">下架</el-link>
+                            <el-link type="primary" @click="showDetail(row)" class="link-btn">详情</el-link>
+                            <el-link type="danger" @click="" class="link-btn" v-if="row.status === '已下架'" @click.prevent="handleDelete(row)">删除</el-link>
                         </template>
                     </el-table-column>
                 </template>
@@ -185,46 +308,77 @@ onMounted(() => {
     </div>
 
     <el-dialog
-        title="审核详情"
+        title="美食详情"
         v-model="dialogVisible"
-        width="50%"
+        width="500"
         :close-on-click-modal="false"
     >
-        <el-descriptions direction="vertical" border style="margin-top: 20px">
-            <el-descriptions-item :rowspan="2" :width="140" label="头像" align="center">
-                <el-image
-                    class="avatar"
-                    style="width: 100px; height: 100px"
-                    :src="dialogValue.user.avatar"
+        <el-alert v-if="dialogValue.status === '已上架'" title="已上架美食不可编辑" type="info" style="margin-bottom: 10px" />
+        <el-form
+            ref="detailFormRef"
+            :rules="detailRules"
+            :model="detailForm"
+            :disabled="dialogValue.status === '已上架'"
+            status-icon
+            label-width="auto"
+            style="width: 400px; margin-left: 35px">
+            <el-form-item label="" prop="cover">
+                <el-upload
+                    style="display: flex;
+                            flex-direction: column; width: 100%"
+                    accept="image/jpeg, image/png"
+                    :show-file-list="false"
+                    :http-request="uploadCover"
+                >
+                    <template #trigger>
+                        <div class="image-container"
+                             @mouseover="hoverTextVisible = true"
+                             @mouseleave="hoverTextVisible = false">
+                            <img class="cover" :src="detailForm.cover" alt="avatar" />
+                            <div class="overlay" v-if="hoverTextVisible && dialogValue.status !== '已上架'">
+                                <el-icon size="20"><Picture /></el-icon>
+                            </div>
+                        </div>
+                    </template>
+                </el-upload>
+            </el-form-item>
+            <el-form-item label="美食名称" prop="name" class="form-item">
+                <el-input v-model="detailForm.name" placeholder="美食名称" />
+            </el-form-item>
+            <el-form-item label="美食简介" prop="intro" class="form-item">
+                <el-input
+                    v-model="detailForm.intro"
+                    placeholder="美食简介"
+                    type="textarea"
+                    maxlength="100"
+                    :rows="4"
+                    show-word-limit
                 />
-            </el-descriptions-item>
-            <el-descriptions-item label="用户名">{{
-                    dialogValue.user.username
-                }}</el-descriptions-item>
-            <el-descriptions-item label="昵称">{{
-                    dialogValue.user.nickname || '无'
-                }}</el-descriptions-item>
-            <el-descriptions-item label="电话">{{ dialogValue.user.phone || '无' }}</el-descriptions-item>
-            <el-descriptions-item label="邮箱">{{ dialogValue.user.email || '无' }}</el-descriptions-item>
-            <el-descriptions-item label="简介" :span="3">{{
-                    dialogValue.user.intro || '无'
-                }}</el-descriptions-item>
-        </el-descriptions>
+            </el-form-item>
+            <el-form-item label="分类" prop="category" class="form-item">
+                <el-select v-model="detailForm.category" clearable placeholder="美食分类">
+                    <el-option v-for="item in filterOptions[1].props!.options" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="价格" prop="price" class="form-item">
+                <el-input-number v-model="detailForm.price" :min="0" :precision="2" >
+                    <template #prefix>
+                        <span>￥</span>
+                    </template>
+                </el-input-number>
+            </el-form-item>
+
+        </el-form>
         <div class="btn-area">
+            <el-button @click="dialogVisible = false" class="btn">取消</el-button>
             <el-button
-                type="success"
-                :loading="isLoading[1]"
-                :disabled="isLoading[0]"
-                @click.prevent="verifyUser(dialogValue.id, dialogValue.user.uid, 1)"
-            >通过</el-button
-            >
-            <el-button
-                type="danger"
-                :loading="isLoading[0]"
-                :disabled="isLoading[1]"
-                @click.prevent="rejectRemark"
-            >拒绝</el-button
-            >
+                type="primary"
+                :loading="isLoading"
+                :disabled="dialogValue.status === '已上架'"
+                @click="submitDetail(detailFormRef)"
+                class="btn">
+                确定
+            </el-button>
         </div>
     </el-dialog>
 </template>
@@ -232,7 +386,7 @@ onMounted(() => {
 <style scoped>
 .container {
     display: flex;
-    flex-direction: column; /* 垂直排列子元素 */
+    flex-direction: column;
     height: 100%;
 }
 
@@ -248,15 +402,46 @@ onMounted(() => {
 }
 
 .btn-area {
-    width: 100%;
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
 }
 
-.avatar {
+.link-btn {
+    margin-right: 5px;
+}
+
+.link-btn:last-child {
+    margin-right: 0;
+}
+
+.cover {
     width: 5vw;
     height: 5vw;
-    border-radius: 100%;
+}
+
+.image-container {
+    position: relative; /* 使叠加层能够根据容器进行定位 */
+    width: 5vw;
+    height: 5vw;
+}
+
+.overlay {
+    position: absolute; /* 叠加层的定位 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* 半透明的黑色背景 */
+    color: white;
+    display: flex; /* 使文字居中对齐 */
+    align-items: center; /* 垂直居中 */
+    justify-content: center; /* 水平居中 */
+    opacity: 0; /* 默认隐藏叠加层 */
+    transition: opacity 0.3s ease; /* 平滑的淡入效果 */
+}
+
+.image-container:hover .overlay {
+    opacity: 1; /* 当鼠标悬停在图片上时显示叠加层 */
 }
 </style>

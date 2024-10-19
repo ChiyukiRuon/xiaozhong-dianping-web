@@ -15,7 +15,7 @@
                     @change="handleFilterChange"
                 >
                     <el-option
-                        v-for="item in filter.props.options"
+                        v-for="item in filter.props!.options"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"

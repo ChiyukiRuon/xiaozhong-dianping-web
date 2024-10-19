@@ -43,3 +43,25 @@ export const formatVerificationType = (type: string): string => {
             return type
     }
 }
+
+/**
+ * 上架状态格式化
+ *
+ * @param status 上架状态
+ * @return 格式化后的上架状态
+ * @author ChiyukiRuon
+ * */
+export const formatStatus = (status: number|string): string|number => {
+    switch (status) {
+        case 0:
+            return '已下架'
+        case 1:
+            return '已上架'
+        case '已下架':
+            return 0
+        case '已上架':
+            return 1
+        default:
+            return '未知'
+    }
+}

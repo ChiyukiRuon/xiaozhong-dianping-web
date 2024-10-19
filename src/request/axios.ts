@@ -105,3 +105,23 @@ export const put = (url: string, params: object): Promise<Response> => {
         })
     })
 }
+
+/**
+ * 封装的DELETE请求
+ *
+ * @param url 请求地址
+ * @param params 请求参数
+ * @return 响应数据
+ * @author ChiyukiRuon
+ * */
+export const del = (url: string, params: object): Promise<Response> => {
+    return new Promise((resolve, reject) => {
+        axios.delete(url, {
+            params: params
+        }).then(res => {
+            resolve(res.data)
+        }).catch(err => {
+            reject(err)
+        })
+    })
+}

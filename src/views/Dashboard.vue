@@ -6,7 +6,6 @@ import { logout } from '@/utils/common'
 import { onMounted } from 'vue'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
-import FoodCard from '@/components/FoodCard.vue'
 
 const userRoute: MenuItem[] = store.state.route
 const userInfo: UserInfo = store.state.userInfo
@@ -28,8 +27,8 @@ onMounted(() => {
 
     if (!token) {
         ElMessage.warning('未登录，请先登录')
-        router.push('/')
-    } else if (store.state.path !== '/') {
+        router.push('/home')
+    } else if (store.state.path !== '/home') {
         router.push(store.state.path)
     }
 })
@@ -38,11 +37,12 @@ onMounted(() => {
 <template>
     <el-container style="width: 100vw; height: 100vh">
         <el-header class="header">
-            <div><img class="icon" src="../../public/icon.png" alt="icon" width="50vw"/></div>
-            <div class="title">小众点评</div>
+            <div @click.prevent="router.push('/home')"><img class="icon" src="../../public/icon.png" alt="icon" width="50vw"/></div>
+            <div @click.prevent="router.push('/home')" class="title">小众点评</div>
             <div class="sub-title">
                 <div v-if="userInfo.role === 'admin'">管理后台</div>
-                <div v-else>商家后台</div>
+                <div v-else-if="userInfo.role === 'merchant'">商家后台</div>
+                <div v-else-if="userInfo.role === 'normal'">用户中心</div>
             </div>
             <el-popover :offset="-5">
                 <template #reference>
@@ -54,6 +54,14 @@ onMounted(() => {
                     </div>
                 </template>
                 <template #default>
+                    <div v-if="store.state.userInfo.role === 'normal'" style="margin-bottom: 5px">
+                        <el-text type="info">{{ store.state.userInfo.username }}</el-text>
+                            <div class="horizontal-divider"></div>
+                            <div class="user-select">
+                                <el-text type="info" @click.prevent="router.push('/dashboard')">用户中心</el-text><component :is="ElIcon.ArrowRight" style="width: 15px; margin-right: 15px" />
+                            </div>
+                            <div class="horizontal-divider"></div>
+                    </div>
                     <el-button type="danger" @click="logout()" style="width: 100%">退出</el-button>
                 </template>
             </el-popover>
@@ -113,6 +121,11 @@ onMounted(() => {
     color: #FFFFFF;
 }
 
+.icon,
+.title:hover {
+    cursor: pointer;
+}
+
 .right {
     margin-left: auto;
     margin-right: 1vw;
@@ -137,6 +150,20 @@ onMounted(() => {
     border: 2px solid #FFFFFF;
     border-radius: 100%;
     z-index: 4;
+}
+
+.user-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    transition: 0.5s;
+}
+
+.user-select:hover {
+    cursor: pointer;
+    background-color: #f4f4f4;
+    transition: 0.5s;
 }
 
 .aside {

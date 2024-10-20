@@ -10,8 +10,18 @@ import router from '@/router'
 export const logout = () => {
     localStorage.clear()
     store.commit('clear')
-    void router.replace('/')
+    void router.replace('/home')
     router.addRoute({ path: '/dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue')})
+}
+
+/**
+ * 用户信息更新
+ *
+ * @return void
+ * */
+export const updateUserInfo = (userInfo: object) => {
+    store.commit('setUserInfo', userInfo)
+    localStorage.setItem('userInfo', JSON.stringify(userInfo))
 }
 
 /**

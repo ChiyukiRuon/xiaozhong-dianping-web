@@ -9,7 +9,7 @@ export const getStatistic = (): Promise<Response> => get(`${BASE_URL}/statistic`
 export const getFood = (page: number, size: number, name: string, category: number | null, status: number | null): Promise<Response> => get(`${BASE_URL}/food`, { page, size, name, category, status })   // 获取商品列表
 export const getCategory = (page: number, size: number, name: string): Promise<Response> => get(`${BASE_URL}/category`, { page, size, name })    // 获取商品分类
 export const getAllCategory = (): Promise<Response> => get(`${BASE_URL}/allcategory`, {})    // 获取商品分类
-export const editInfo = (nickname: string, intro: string, phone: string, email: string, address: string): Promise<Response> => get(`${BASE_URL}/info`, { nickname, intro, phone, email, address })    // 修改商户信息
+export const editInfo = (nickname: string, intro: string, phone: string, email: string, address: string, avatar: string): Promise<Response> => post(`${BASE_URL}/info`, { nickname, intro, phone, email, address, avatar })    // 修改商户信息
 export const editFood = (name: string, intro: string, price: number | null, category: number | null, status: number | null, id: number | null): Promise<Response> => post(`${BASE_URL}/food`, { id, name, intro, price, category, status })    // 修改商品信息
 export const editCategory = (category: string, id: number|null): Promise<Response> => post(`${BASE_URL}/category`, { id, category })    // 修改商品分类
 export const deleteFood = (id: number): Promise<Response> => del(`${BASE_URL}/food`, { id })    // 删除美食

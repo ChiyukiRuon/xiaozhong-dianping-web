@@ -33,7 +33,7 @@ export default defineComponent({
 <style scoped>
 .food-card {
     width: 200px;
-    margin: 10px;
+    margin: 5px;
     padding-bottom: 10px;
     border-radius: 10px;
     background-color: #FFFFFF;
@@ -49,6 +49,7 @@ export default defineComponent({
 .food-card:hover {
     box-shadow: #a6a6a6 2px 2px 15px;
     transition: 0.5s;
+    cursor: pointer;
 }
 
 .cover {

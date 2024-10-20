@@ -7,6 +7,7 @@ import type { Region, Response } from '@/interface'
 import { commonAPI, merchantAPI } from '@/request/api'
 import store from '@/store'
 import router from '@/router'
+import { updateUserInfo } from '@/utils/common'
 
 const CDN_URL = import.meta.env.VITE_CDN_URL
 
@@ -30,7 +31,9 @@ let defaultDetailForm = ref({
     address: '',
     annex: ''
 })
+
 let isLoading = ref(false)
+let isFormDataChanged = ref(false)
 let hoverTextVisible = ref(false)
 let detailFormRef = ref<FormInstance>()
 
@@ -64,11 +67,13 @@ const font = reactive({
     fontSize: 10,
 })
 
+// 表单校验
 const validateNickname = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
         return callback(new Error('请输入商家名称'))
     }
     if (isNicknameValid(value)) {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     } else {
         if (value.length < 3 || value.length > 30) {
@@ -79,11 +84,13 @@ const validateNickname = (rule: any, value: string, callback: any) => {
     }
 }
 const validateIntro = (rule: any, value: string, callback: any) => {
-    if (!value.trim()) {
-        return callback(new Error('请输入商家简介'))
+    if (!value) {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
+        callback()
     } else if (value.length > 100) {
         callback(new Error('商家简介长度不能超过100个字符'))
     } else {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     }
 }
@@ -93,6 +100,7 @@ const validatePhone = (rule: any, value: string, callback: any) => {
     } else if (!/^1[3456789]\d{9}$/.test(value)) {
         callback(new Error('手机号格式不正确'))
     } else {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     }
 }
@@ -102,6 +110,7 @@ const validateEmail = (rule: any, value: string, callback: any) => {
     } else if (!isEmailValid(value)) {
         callback(new Error('邮箱格式不正确'))
     } else {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     }
 }
@@ -109,6 +118,7 @@ const validateRegion = (rule: any, value: string[], callback: any) => {
     if (value.length !== 4) {
         callback(new Error('请选择所在地'))
     } else {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     }
 }
@@ -116,6 +126,7 @@ const validateAddress = (rule: any, value: string, callback: any) => {
     if (!value.trim()) {
         return callback(new Error('请输入详细地址'))
     } else {
+        isFormDataChanged.value = deepCompare(detailForm.value, defaultDetailForm.value)
         callback()
     }
 }
@@ -133,20 +144,58 @@ const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.validate((valid) => {
         if (valid) {
-            editInfo(detailForm.value.nickname, detailForm.value.intro, detailForm.value.phone, detailForm.value.email, detailForm.value.address)
+            const { address, region } = detailForm.value
+            const completeAddress = `${region.join(' ')} ${address}`
+
+            editInfo(detailForm.value.nickname, detailForm.value.intro, detailForm.value.phone, detailForm.value.email, completeAddress)
         }
     })
 }
 const resetForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
-    formEl.clearValidate()
+    isFormDataChanged.value = false
     detailForm.value = defaultDetailForm.value
+    formEl.clearValidate()
+}
+
+/**
+ * 比较是否存在更改
+ *
+ * @param obj1 第一个对象
+ * @param obj2 第二个对象
+ * @return 存在更改则返回 true，否则返回 false
+ * @author ChiyukiRuon
+ */
+const deepCompare = (obj1: Record<string, any>, obj2: Record<string, any>): boolean => {
+    if (typeof obj1 !== typeof obj2 || obj1 === null || obj2 === null) {
+        return obj1 !== obj2
+    }
+
+    if (typeof obj1 !== 'object') {
+        return obj1 !== obj2
+    }
+
+    const keys1 = Object.keys(obj1)
+    const keys2 = Object.keys(obj2)
+
+    if (keys1.length !== keys2.length) {
+        return true
+    }
+
+    for (const key of keys1) {
+        if (deepCompare(obj1[key], obj2[key])) {
+            return true
+        }
+    }
+
+    return false
 }
 
 // 请求
 const uploadAvatar = (file: any) => {
     merchantAPI.uploadFile(file.file, 'avatar').then((res: Response) => {
         detailForm.value.avatar = `${CDN_URL}${res.data.url}`
+        editInfo('', '', '', '', '', detailForm.value.avatar)
     })
 }
 const getStatistic = () => {
@@ -156,24 +205,30 @@ const getStatistic = () => {
         // totalReview.value = res.data.review
     })
 }
-const editInfo = (nickname: string = '', intro: string = '', phone: string = '', email: string = '', address: string = '') => {
-    merchantAPI.editInfo(nickname, intro, phone, email, address).then((res: Response) => {
-        console.log(res.data)
+const editInfo = (nickname: string = '', intro: string = '', phone: string = '', email: string = '', address: string = '', avatar: string = '') => {
+    isLoading.value = true
+    merchantAPI.editInfo(nickname, intro, phone, email, address, avatar).then((res: Response) => {
+        isLoading.value = false
+        isFormDataChanged.value = false
+        defaultDetailForm.value = { ...detailForm.value }
+        updateUserInfo(res.data)
+    }).catch(() => {
+        isLoading.value = false
     })
 }
 
 onMounted(() => {
     if (store.state.userInfo.role !== 'merchant') {
-        router.push('/')
+        router.push('/home')
     }
 
-    getStatistic()
     const { address, ...userInfo } = store.state.userInfo
     detailForm.value = userInfo
     detailForm.value.region = address.split(' ').slice(0, 4)
     detailForm.value.address = address.split(' ')[4]
+    defaultDetailForm.value = { ...detailForm.value }
 
-    defaultDetailForm.value = detailForm.value
+    getStatistic()
 })
 </script>
 
@@ -246,20 +301,26 @@ onMounted(() => {
                         :props="props"
                         v-model="detailForm.region"
                         separator=" "
+                        @blur="isFormDataChanged = deepCompare(detailForm, defaultDetailForm)"
                     />
                     <el-input v-model="detailForm.address" placeholder="详细地址" />
                 </el-form-item>
             </el-form>
         </div>
         <div class="license">
-            <el-watermark style="width: 400px" :font="font" :gap="[50, 50]" :content="['仅用于小众点评平台展示', store.state.userInfo.username]">
+            <el-watermark
+                style="width: 400px"
+                :font="font"
+                :gap="[50, 50]"
+                :content="['仅用于小众点评平台展示', store.state.userInfo.username]"
+            >
                 <img style="width: 400px" :src="store.state.userInfo.annex" alt="license" />
             </el-watermark>
         </div>
     </div>
-    <div class="button-container">
+    <div class="button-container" v-if="isFormDataChanged">
         <el-button @click="resetForm(detailFormRef)">重置</el-button>
-        <el-button type="primary" @click="submitForm(detailFormRef)">提交</el-button>
+        <el-button type="primary" @click="submitForm(detailFormRef)" :loading="isLoading">提交</el-button>
     </div>
 </template>
 
@@ -272,7 +333,7 @@ onMounted(() => {
 .statistic-card {
     width: 200px;
     height: 100px;
-    background-color: #FFFFFF;
+    background-color: #ffffff;
     display: flex;
     align-items: center;
     padding: 10px;

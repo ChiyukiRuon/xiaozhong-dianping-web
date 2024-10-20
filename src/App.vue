@@ -18,7 +18,7 @@ onMounted(() => {
         })
     }
 
-    if (Object.keys(JSON.parse(userInfo)).length !== 0 && token) {
+    if (Object.keys(userInfo).length === 0 && Object.keys(JSON.parse(userInfo)).length !== 0 && token) {
         authAPI.getRoute().then((res: Response) => {
             store.commit('setPath', res.data.path)
             store.commit('setRoute', res.data.route)

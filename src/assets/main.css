@@ -32,3 +32,10 @@ a {
     font-size: 1vw;
     color: #FFFFFF;
 }
+
+.horizontal-divider {
+    height: 1px;
+    background-color: #a6a6a6;
+    margin: 2px 0;
+    width: 100%;
+}

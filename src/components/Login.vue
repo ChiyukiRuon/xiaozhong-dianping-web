@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isPasswordValid, isUsernameValid } from '@/utils/valid'
 import { authAPI, userAPI } from '@/request/api'
-import type { MenuItem, Response } from '@/interface'
+import type { Response } from '@/interface'
 import { rsa } from '@/utils/rsa'
 import store from '@/store'
 import router from '@/router'
@@ -82,7 +82,7 @@ const validatePass2 = (rule: any, value: string, callback: any) => {
     }
 }
 
-const ruleForm = reactive({
+let ruleForm = reactive({
     username: '',
     password: '',
     confirm: ''
@@ -131,6 +131,11 @@ const login = (username: string, password: string) => {
             store.commit('setRoute', res.data.route)
 
             isLoading.value = false
+            ruleForm = reactive({
+                username: '',
+                password: '',
+                confirm: ''
+            })
             emits('close')
             router.push(res.data.path)
         }).catch(() => {
@@ -160,7 +165,13 @@ const register = (username: string, password: string) => {
 
             isLoading.value = false
             emits('close')
-            router.push('/')
+            ruleForm = reactive({
+                username: '',
+                password: '',
+                confirm: ''
+            })
+            isRegister.value = false
+            router.push('/home')
         }).catch(() => {
             isLoading.value = false
         })
@@ -173,7 +184,7 @@ const register = (username: string, password: string) => {
     <div class="login">
         <div class="logo-area">
             <div class="logo-title">小众点评</div>
-            <img src="../../public/icon.png" width="200">
+            <img src="../../public/icon.png" width="200" alt="icon">
         </div>
         <div class="vertical-divider"></div>
         <div class="form-area">

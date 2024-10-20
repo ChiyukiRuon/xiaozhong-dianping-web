@@ -3,7 +3,7 @@ import { ArrowRightBold, Check, Edit, Upload, UploadFilled, User } from '@elemen
 import { onMounted, reactive, ref } from 'vue'
 import { type CascaderProps, ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { isEmailValid, isNicknameValid, isPasswordValid, isUsernameValid } from '@/utils/valid'
-import { commonAPI, authAPI, userAPI, merchantAPI } from '@/request/api'
+import { commonAPI, userAPI, merchantAPI } from '@/request/api'
 import type { Region, Response } from '@/interface'
 import { rsa } from '@/utils/rsa'
 import store from '@/store'
@@ -248,7 +248,7 @@ const apply = (formData: any) => {
     const completeAddress = `${region.join(' ')} ${address}`
 
     isLoading.value = true
-    merchantAPI.apply(formData.avatar, formData.nickname, formData.intro, formData.phone, formData.email, completeAddress, formData.annex).then((res: Response) => {
+    merchantAPI.apply(formData.avatar, formData.nickname, formData.intro, formData.phone, formData.email, completeAddress, formData.annex).then(() => {
         isLoading.value = false
         step.value++
     }).catch(() => {
@@ -274,7 +274,7 @@ const uploadAnnex = (file: any) => {
  * */
 const backToHome = () => {
     logout()
-    router.push('/')
+    router.push('/home')
 }
 
 onMounted(() => {

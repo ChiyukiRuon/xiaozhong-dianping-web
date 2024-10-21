@@ -158,6 +158,7 @@ const register = (username: string, password: string) => {
 
             localStorage.setItem('token', res.data.token)
             localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+            localStorage.setItem('userRoute', JSON.stringify(res.data.route))
 
             store.commit('setUserInfo', res.data.user)
             store.commit('setPath', res.data.path)

@@ -7,7 +7,7 @@ import { onMounted } from 'vue'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
 
-const userRoute: MenuItem[] = store.state.route
+let userRoute: MenuItem[] = store.state.route || JSON.parse(localStorage.getItem('userRoute')!) || []
 const userInfo: UserInfo = store.state.userInfo
 
 try {

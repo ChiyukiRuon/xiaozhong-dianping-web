@@ -33,6 +33,7 @@ declare module 'vue' {
     ElOption: typeof import('element-plus/es')['ElOption']
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElPopover: typeof import('element-plus/es')['ElPopover']
+    ElRate: typeof import('element-plus/es')['ElRate']
     ElResult: typeof import('element-plus/es')['ElResult']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
@@ -57,6 +58,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Tabl: typeof import('./src/components/Tabl.vue')['default']
     Table: typeof import('./src/components/Table.vue')['default']
+    UserCard: typeof import('./src/components/UserCard.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

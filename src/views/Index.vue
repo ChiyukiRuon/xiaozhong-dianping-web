@@ -1,14 +1,34 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import FoodCard from '@/components/FoodCard.vue'
+import { commonAPI } from '@/request/api'
+
+let current = ref(1)
+let size = ref(10)
+let total = ref(0)
+let foodList = ref([])
+
+const getIndex = (page: number = 1, pageSize: number = 10) => {
+    commonAPI.getIndex(page, pageSize).then(res => {
+        foodList.value = res.data.list
+        total.value = res.data.total
+        current.value = res.data.current
+        size.value = res.data.size
+    })
+}
+
+onMounted(() => {
+    getIndex()
+})
 </script>
 
 <template>
     <div class="container" style="height: 100%; display: flex; justify-content: center">
         <div class="main-container">
             <FoodCard
-                :food-info="{ cover: 'http://cdn.dianping.chiyukiruon.top/cover/1728023617153-122232J3.jpg', name: '123', intro: '22222' }"
-                size="small"
-                v-for="i in 10"
+                :food-info="food"
+                size="large"
+                v-for="( food, i ) in foodList"
                 :key="i"
             />
         </div>

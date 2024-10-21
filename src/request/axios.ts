@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 import type { Response } from '@/interface'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_API
 axios.create({
     headers: {
         'Content-Type': 'application/json'

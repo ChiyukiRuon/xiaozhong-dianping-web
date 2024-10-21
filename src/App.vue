@@ -5,10 +5,13 @@ import store from '@/store'
 import router from '@/router'
 import { authAPI } from '@/request/api'
 import type { Response } from '@/interface'
+import { updateUserInfo } from '@/utils/common'
 
 onMounted(() => {
     const token: string = localStorage.getItem('token') || ''
     const userInfo: string = localStorage.getItem('userInfo') || '{}'
+    updateUserInfo(JSON.parse(userInfo))
+    console.log(userInfo)
 
     if (store.state.publicKey === '') {
         authAPI.getPublicKey().then((res: Response) => {
@@ -23,6 +26,12 @@ onMounted(() => {
             store.commit('setPath', res.data.path)
             store.commit('setRoute', res.data.route)
             router.push(res.data.path)
+        })
+        store.commit('setUserInfo', JSON.parse(userInfo))
+    } else {
+        authAPI.getRoute().then((res: Response) => {
+            store.commit('setPath', res.data.path)
+            store.commit('setRoute', res.data.route)
         })
         store.commit('setUserInfo', JSON.parse(userInfo))
     }

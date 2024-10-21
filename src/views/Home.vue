@@ -24,7 +24,7 @@ const handelSearch = () => {
 }
 
 onMounted(() => {
-    if (store.state.path !== '/home' && store.state.userInfo.role !== 'normal') {
+    if (store.state.path && store.state.path !== '/home' && store.state.userInfo.role !== 'normal') {
         router.push(store.state.path)
     }
 })

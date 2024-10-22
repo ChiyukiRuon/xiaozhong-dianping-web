@@ -202,7 +202,7 @@ const getStatistic = () => {
     merchantAPI.getStatistic().then((res: Response) => {
         totalFood.value = res.data.statistic.food
         totalCategory.value = res.data.statistic.category
-        // totalReview.value = res.data.review
+        totalReview.value = res.data.statistic.review
     })
 }
 const editInfo = (nickname: string = '', intro: string = '', phone: string = '', email: string = '', address: string = '', avatar: string = '') => {

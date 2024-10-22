@@ -130,7 +130,6 @@ const formatCategory = (category: number): string => {
 // 按钮功能
 // 上架/下架
 const handleShelf = (row: any, status: number) => {
-    console.log(row)
     editFoodInfo('', '', null, row.category, status, row.id)
 }
 // 删除

@@ -46,7 +46,7 @@ onMounted(() => {
     align-items: start;
     grid-auto-rows: min-content;
     width: 70vw;
-    max-width: 1500px;
+    max-width: 1000px;
     min-width: 300px;
     padding: 10px;
     background-color: #FFFFFF;

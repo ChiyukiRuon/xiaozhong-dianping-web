@@ -7,6 +7,7 @@ let current = ref(1)
 let size = ref(10)
 let total = ref(0)
 let foodList = ref([])
+let rankList = ref([])
 
 const getIndex = (page: number = 1, pageSize: number = 10) => {
     commonAPI.getIndex(page, pageSize).then(res => {
@@ -17,8 +18,15 @@ const getIndex = (page: number = 1, pageSize: number = 10) => {
     })
 }
 
+const getRank = () => {
+    commonAPI.getRank().then(res => {
+        rankList.value = res.data.rank
+    })
+}
+
 onMounted(() => {
     getIndex()
+    getRank()
 })
 </script>
 
@@ -33,7 +41,10 @@ onMounted(() => {
             />
         </div>
         <div class="side-container">
-            <div>rank</div>
+            <el-text style="margin: 0 auto" size="large" type="primary" tag="b">评价排行</el-text>
+            <div v-for="(item, i) in rankList" :key="i">
+                <FoodCard :food-info="item" size="small" />
+            </div>
         </div>
     </div>
 </template>
@@ -62,7 +73,10 @@ onMounted(() => {
     max-height: 600px;
     margin-top: 20px;
     margin-left: 20px;
+    padding: 10px;
     border-radius: 10px;
     background-color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
 }
 </style>

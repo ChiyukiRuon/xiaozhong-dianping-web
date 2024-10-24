@@ -16,18 +16,25 @@
             />
         </div>
     </div>
-    <div class="food-card" v-else>
-
+    <div class="food-card-small" v-else @click.prevent="openDetail(foodInfo.id)" :style="shadow?'box-shadow: 0 1px 12px 0 rgba(0, 0, 0, 0.1); padding: 5px;':''">
+        <img :src="foodInfo.cover" alt="cover" />
+        <el-text size="large" tag="b" truncated>{{ foodInfo.name }}</el-text>
+        <div style="margin-left: auto; display: flex; justify-content: center; align-items: center; color: #ff9900">
+            <el-icon style="margin-right: 2px;"><Star /></el-icon>
+            {{ foodInfo.score }}
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { PropType } from 'vue';
+import type { PropType } from 'vue'
 import router from '@/router'
+import { Star } from '@element-plus/icons-vue'
 
 export default defineComponent({
     name: 'FoodCard',
+    components: { Star },
     props: {
         size: {
             type: String as PropType<'small' | 'large'>,
@@ -37,6 +44,11 @@ export default defineComponent({
         foodInfo: {
             type: Object,
             required: true
+        },
+        shadow: {
+            type: Boolean,
+            default: false,
+            required: false
         }
     },
     methods: {
@@ -100,5 +112,23 @@ export default defineComponent({
     word-wrap: break-word;
     -webkit-box-orient: vertical;
     white-space: normal;
+}
+
+.food-card-small {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 5px 0;
+    border-radius: 10px;
+}
+
+.food-card-small:hover {
+    cursor: pointer;
+}
+
+.food-card-small img {
+    width: 40px;
+    border-radius: 10px;
+    margin-right: 5px;
 }
 </style>

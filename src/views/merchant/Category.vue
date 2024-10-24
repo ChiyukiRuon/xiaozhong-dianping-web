@@ -62,8 +62,7 @@ const handleAdd = () => {
 }
 // 删除
 const handleDelete = (row: any) => {
-    let confirmText = ''
-    console.log(row)
+    let confirmText: string
     if (row.count > 0) {
         confirmText = `该分类下有${row.count}个美食，删除后对应美食的分类将被清除`
     } else {
@@ -128,7 +127,7 @@ onMounted(() => {
                 <template v-slot:action>
                     <el-table-column label="操作" width="200" align="center">
                         <template v-slot="{ row }">
-                            <el-link type="primary" @click="" class="link-btn">详情</el-link>
+<!--                            <el-link type="primary" @click="" class="link-btn">详情</el-link>-->
                             <el-link type="danger" @click.prevent="handleDelete(row)" class="link-btn">删除</el-link>
                         </template>
                     </el-table-column>

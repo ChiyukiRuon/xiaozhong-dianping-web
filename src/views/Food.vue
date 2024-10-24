@@ -48,6 +48,7 @@ const getFoodInfo = (id: number) => {
     commonAPI.getFoodById(id).then((res) => {
         foodInfo.value = res.data.food
         merchantInfo.value = res.data.food.merchant
+        getStatistic(merchantInfo.value.uid)
     })
 }
 const getReview = (id: number, page: number = 1, pageSize: number = 10) => {
@@ -55,6 +56,12 @@ const getReview = (id: number, page: number = 1, pageSize: number = 10) => {
         review.value = res.data.list
         getFoodInfo(foodId)
         handleClose()
+    })
+}
+const getStatistic = (uid:number) => {
+    commonAPI.getStatistic(uid).then((res) => {
+        merchantInfo.value.foodCount = res.data.foodCount
+        merchantInfo.value.reviewCount = res.data.reviewCount
     })
 }
 const postReview = () => {
@@ -213,9 +220,9 @@ onMounted(() => {
                 </template>
             </el-upload>
         </div>
-        <div>
-            <el-checkbox v-model="formData.anonymity" label="匿名评价" />
-        </div>
+<!--        <div>-->
+<!--            <el-checkbox v-model="formData.anonymity" label="匿名评价" />-->
+<!--        </div>-->
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="handleClose" :disabled="isLoading">取消</el-button>

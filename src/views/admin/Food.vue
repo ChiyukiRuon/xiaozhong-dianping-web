@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import Table from '@/components/Table.vue'
+import { ElMessageBox } from 'element-plus'
 import type { Response } from '@/interface'
-import { merchantAPI } from '@/request/api'
+import { adminAPI } from '@/request/api'
 import Filter from '@/components/Filter.vue'
 
 let showBigImage = ref(false)
@@ -14,51 +15,68 @@ let size = ref(10)
 let bigImageUrl = ref('')
 let tableData = ref([])
 let filterValue = ref({
-    food: null,
+    food: '',
+    merchant: ''
 })
 
 // 配置项
 const columns = ref([
-    { label: '内容', prop: 'content' },
+    { label: '美食名', prop: 'name' },
+    { label: '简介', prop: 'intro', config: { showOverflowTooltip: true } },
     { label: '评分', prop: 'score' },
-    { label: '用户', prop: 'user' },
-    { label: '美食', prop: 'foodName' },
-    // { label: '匿名', prop: 'anonymityString' }
+    { label: '商家', prop: 'merchantName' }
 ])
 const filterOptions = ref([
-    {
-        label: '美食',
-        field: 'food',
-        type: 'select',
-        props: {
-            options: []
-        }
-    }
+    { label: '美食名', field: 'food', type: 'text' },
+    { label: '商家', field: 'merchant', type: 'text' }
 ])
 
 // 筛选器回调
 const handleFilter = (data: any) => {
     filterValue.value = data
-    getReviewList(current.value, size.value, filterValue.value.food)
+    getFoodList(current.value, size.value, filterValue.value.food, filterValue.value.merchant)
 }
 const handleFilterClear = () => {
     filterValue.value = {
-        food: null,
+        food: '',
+        merchant: ''
     }
-    getReviewList(current.value, size.value)
+    getFoodList(current.value, size.value)
 }
 
 // 分页器回调
 const handleSizeChange = (size: number) => {
-    getReviewList(current.value, size)
+    getFoodList(current.value, size)
 }
 const handleCurrentChange = (page: number) => {
-    getReviewList(page, size.value)
+    getFoodList(page, size.value)
 }
 
-// 按钮功能
+// 刷新页面数据
+const refresh = () => {
+    getFoodList(current.value, size.value, filterValue.value.merchant)
+}
+const validateForm = (value: string): boolean => {
+    return !(!value || /^\s*$/.test(value))
+}
 
-// 显示大图
+
+// 删除
+const handleShelf = (row: any) => {
+    ElMessageBox.prompt(`确定要下架美食“${row.name}”吗`, '下架美食', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        inputPlaceholder: '输入下架原因',
+        inputValidator: validateForm,
+        inputErrorMessage: '下架原因不能为空'
+    }).then(({ value }) => {
+        adminAPI.foodShelf(row.id, value).then(() => {
+            refresh()
+        })
+    })
+}
+// 编辑评价详情
 const showImage = (imgUrl: string) => {
     bigImageUrl.value = imgUrl
     showBigImage.value = true
@@ -74,53 +92,59 @@ const closeImage = () => {
  * @param page 页码
  * @param pageSize 每页数量
  * @param food 美食名
+ * @param merchant 商家名
  * @return void
  * @author ChiyukiRuon
  * */
-const getReviewList = (page: number = 1, pageSize: number = 10, food: number|null =null) => {
-    merchantAPI.getReviewList(page, pageSize, food).then((res: Response) => {
-        tableData.value = res.data.reviewList.map((item: any) => ({
+const getFoodList = (page: number = 1, pageSize: number = 10, food: string = '', merchant: string = '') => {
+    adminAPI.getFoodList(page, pageSize, food, merchant).then((res: Response) => {
+        tableData.value = res.data.foodList.map((item: any) => ({
             ...item,
-            user: item.user.nickname,
-            foodName: item.food.name,
+            merchantName: item.merchant.nickname,
         }))
         total.value = res.data.total
         current.value = res.data.current
         size.value = res.data.size
     })
 }
-const getAllFood = () => {
-    merchantAPI.getAllFood().then((res: Response) => {
-        filterOptions.value[0].props!.options = res.data.foodList.map((item: any) => ({
-            label: item.label,
-            value: item.value
-        }))
-    })
-}
 
 onMounted(() => {
-    getReviewList(current.value, size.value)
-    getAllFood()
+    getFoodList(current.value, size.value)
 })
 </script>
 
 <template>
     <div class="container">
         <div class="top-part">
-            <Filter :filters="filterOptions" @apply-filters="handleFilter" @reset-filters="handleFilterClear" />
+            <Filter
+                :filters="filterOptions"
+                @apply-filters="handleFilter"
+                @reset-filters="handleFilterClear"
+            />
             <Table :columns="columns" :table-data="tableData">
                 <template v-slot:action>
-                    <el-table-column label="附件" width="200" align="center">
+                    <el-table-column label="封面" width="200" align="center">
                         <template v-slot="{ row }">
-                            <span v-if="!row.annex || row.annex === ''">无</span>
+                            <span v-if="!row.cover || row.cover === ''">无</span>
                             <img
                                 v-else
                                 style="height: 40px"
-                                :src="row.annex"
+                                :src="row.cover"
                                 alt="annex"
-                                @click="showImage(row.annex)"
+                                @click="showImage(row.cover)"
                                 class="annex-img"
                             />
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="200" align="center">
+                        <template v-slot="{ row }">
+                            <el-link
+                                type="danger"
+                                @click=""
+                                class="link-btn"
+                                @click.prevent="handleShelf(row)"
+                                >下架</el-link
+                            >
                         </template>
                     </el-table-column>
                 </template>

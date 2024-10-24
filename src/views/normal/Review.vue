@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import Table from '@/components/Table.vue'
-import { ElButton, ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
 import type { Response } from '@/interface'
 import { userAPI } from '@/request/api'
 import Filter from '@/components/Filter.vue'
 import { Delete, Loading, Plus } from '@element-plus/icons-vue'
+import FoodCard from '@/components/FoodCard.vue'
 
 const CDN_URL = import.meta.env.VITE_CDN_URL
 
@@ -23,16 +24,20 @@ let bigImageUrl = ref('')
 let tableData = ref([])
 let dialogValue = ref({})
 let filterValue = ref({
-    name: '',
-    category: null,
+    content: '',
+    food: '',
+    merchant: '',
     status: null
 })
 let detailForm = reactive({
     content: '',
     score: 0,
     annex: '',
+    status: 0,
+    remark: '',
     anonymity: false
 })
+let foodDetail = ref({})
 
 // 配置项
 const columns = ref([
@@ -40,23 +45,36 @@ const columns = ref([
     { label: '评分', prop: 'score' },
     { label: '美食名', prop: 'foodName' },
     { label: '商家', prop: 'merchantName' },
-    { label: '匿名', prop: 'anonymityString' }
+    { label: '状态', prop: 'statusString' },
+    // { label: '匿名', prop: 'anonymityString' }
 ])
 const filterOptions = ref([
     { label: '内容', field: 'content', type: 'text' },
-    { label: '美食名', field: 'name', type: 'text' },
-    { label: '商家', field: 'merchant', type: 'text' }
+    { label: '美食名', field: 'food', type: 'text' },
+    { label: '商家', field: 'merchant', type: 'text' },
+    {
+        label: '状态',
+        field: 'status',
+        type: 'select',
+        props: {
+            options: [
+                { label: '正常', value: 0 },
+                { label: '审核删除', value: 2 },
+            ]
+        }
+    }
 ])
 
 // 筛选器回调
 const handleFilter = (data: any) => {
     filterValue.value = data
-    getReviewList(current.value, size.value)
+    getReviewList(current.value, size.value, filterValue.value.content, filterValue.value.food, filterValue.value.merchant, filterValue.value.status)
 }
 const handleFilterClear = () => {
     filterValue.value = {
-        name: '',
-        category: null,
+        content: '',
+        food: '',
+        merchant: '',
         status: null
     }
     getReviewList(current.value, size.value)
@@ -64,15 +82,27 @@ const handleFilterClear = () => {
 
 // 分页器回调
 const handleSizeChange = (size: number) => {
-    getReviewList(current.value, size)
+    getReviewList(current.value, size, filterValue.value.content, filterValue.value.food, filterValue.value.merchant, filterValue.value.status)
 }
 const handleCurrentChange = (page: number) => {
-    getReviewList(page, size.value)
+    getReviewList(page, size.value, filterValue.value.content, filterValue.value.food, filterValue.value.merchant, filterValue.value.status)
 }
 
 // 刷新页面数据
 const refresh = () => {
-    getReviewList(current.value, size.value)
+    getReviewList(current.value, size.value, filterValue.value.content, filterValue.value.food, filterValue.value.merchant, filterValue.value.status)
+}
+const formatStatus = (status: number): string => {
+    switch (status) {
+        case 0:
+            return '正常'
+        case 1:
+            return '隐藏'
+        case 2:
+            return '审核删除'
+        default:
+            return '未知'
+    }
 }
 
 // 按钮功能
@@ -94,7 +124,10 @@ const showDetail = (row: any) => {
     detailForm.content = row.content
     detailForm.score = row.score
     detailForm.annex = row.annex
+    detailForm.status = row.status
+    detailForm.remark = row.remark
     detailForm.anonymity = !!row.anonymity
+    foodDetail.value = row.target
     dialogVisible.value = true
 }
 const showImage = (imgUrl: string) => {
@@ -109,16 +142,20 @@ const closeImage = () => {
 // 关闭对话框
 const handleClose = () => {
     dialogVisible.value = false
+    foodDetail.value = {}
     detailForm = {
         content: '',
         score: 0,
         anonymity: false,
+        status: 0,
+        remark: '',
         annex: ''
     }
     dialogValue.value = {}
 }
 // 删除附件
 const handleRemove = () => {
+    if (detailForm.status !== 0) return
     detailForm.annex = ''
 }
 // 提交表单
@@ -153,15 +190,20 @@ const commitEdit = () => {
  *
  * @param page 页码
  * @param pageSize 每页数量
+ * @param content 评论内容
+ * @param food 美食名
+ * @param merchant 商家名
+ * @param status 状态
  * @return void
  * @author ChiyukiRuon
  * */
-const getReviewList = (page: number, pageSize: number) => {
-    userAPI.getReviewHistory(page, pageSize).then((res: Response) => {
+const getReviewList = (page: number, pageSize: number, content: string = '', food: string = '', merchant: string = '', status: number|null = null) => {
+    userAPI.getReviewHistory(page, pageSize, content, food, merchant, status).then((res: Response) => {
         tableData.value = res.data.reviewList.map((item: any) => ({
             ...item,
             foodName: item.target.name,
             merchantName: item.merchant.nickname,
+            statusString: formatStatus(item.status),
             anonymityString: item.anonymity ? '是' : '否'
         }))
         total.value = res.data.total
@@ -221,7 +263,7 @@ onMounted(() => {
 <template>
     <div class="container">
         <div class="top-part">
-            <!--            <Filter :filters="filterOptions" @apply-filters="handleFilter" @reset-filters="handleFilterClear" />-->
+            <Filter :filters="filterOptions" @apply-filters="handleFilter" @reset-filters="handleFilterClear" />
             <Table :columns="columns" :table-data="tableData">
                 <template v-slot:action>
                     <el-table-column label="附件" width="200" align="center">
@@ -268,7 +310,8 @@ onMounted(() => {
         </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="发表评价" width="500" :before-close="handleClose">
+    <el-dialog v-model="dialogVisible" title="编辑评价" width="500" :before-close="handleClose">
+        <el-alert v-if="detailForm.status === 2" :title="'审核删除: '+detailForm.remark" type="warning" style="margin-bottom: 10px" />
         <el-input
             v-model="detailForm.content"
             type="textarea"
@@ -276,16 +319,18 @@ onMounted(() => {
             :minlength="5"
             :maxlength="200"
             show-word-limit
+            :disabled="detailForm.status !== 0"
             :rows="5"
         />
-        <el-rate v-model="detailForm.score" allow-half show-score text-color="#ff9900" />
-        <div style="width: 140px; margin-right: auto">
+        <el-rate v-model="detailForm.score" allow-half show-score text-color="#ff9900" :disabled="detailForm.status !== 0" />
+        <div style="width: 140px; margin-right: auto;">
             <el-upload
                 style="display: flex; flex-direction: column; width: 100%"
                 accept="image/jpeg, image/png"
                 :show-file-list="false"
                 :limit="1"
                 :http-request="uploadAnnex"
+                :disabled="detailForm.status !== 0"
             >
                 <template #trigger>
                     <div class="upload-container" v-if="detailForm.annex === ''">
@@ -306,10 +351,11 @@ onMounted(() => {
                 </template>
             </el-upload>
         </div>
-        <div>
-            <el-checkbox v-model="detailForm.anonymity" label="匿名评价" />
-        </div>
-        <template #footer>
+<!--        <div>-->
+<!--            <el-checkbox v-model="detailForm.anonymity" label="匿名评价" />-->
+<!--        </div>-->
+        <FoodCard :food-info="foodDetail" size="small" :shadow="true" />
+        <template #footer v-if="detailForm.status === 0">
             <div class="dialog-footer">
                 <el-button @click="handleClose" :disabled="isLoading">取消</el-button>
                 <el-button type="primary" @click="commitEdit" :loading="isLoading">

@@ -13,6 +13,7 @@
             :label="column.label"
             :width="column.width"
             :formatter="column.formatter"
+            :show-overflow-tooltip="column.config?.showOverflowTooltip ?? false"
         ></el-table-column>
         <slot name="action"></slot>
     </el-table>
@@ -25,6 +26,9 @@ import type { PropType } from 'vue';
 interface TableColumn {
     label: string
     prop: string
+    config?: {
+        showOverflowTooltip?: boolean
+    }
     width?: string | number
     slot?: string
     formatter?: (row: any, column: TableColumn, cellValue: any) => string

@@ -70,4 +70,12 @@ watch(() => route.query.term, (newTerm) => {
     background-color: #FFFFFF;
     overflow: scroll;
 }
+
+.merchant-container {
+    display: flex;
+}
+
+.food-container {
+    display: flex;
+}
 </style>

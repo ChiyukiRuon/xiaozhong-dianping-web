@@ -130,7 +130,7 @@ const formatCategory = (category: number): string => {
 // 按钮功能
 // 上架/下架
 const handleShelf = (row: any, status: number) => {
-    editFoodInfo('', '', null, row.category, status, row.id)
+    editFoodInfo('', '', '', null, row.category, status, row.id)
 }
 // 删除
 const handleDelete = (row: any) => {
@@ -173,10 +173,11 @@ const showAdd = () => {
 // 提交表单
 const submitDetail = (formEl: FormInstance | undefined) => {
     if (!formEl) return
+    console.log(detailForm)
     formEl.validate((valid) => {
         if (valid) {
             if (detailForm.category === '无') detailForm.category = null
-            editFoodInfo(detailForm.name, detailForm.intro, detailForm.price, detailForm.category??null, dialogValue.value.status?null:0, dialogValue.value.id??null)
+            editFoodInfo(detailForm.name, detailForm.intro, detailForm.cover, detailForm.price, detailForm.category??null, dialogValue.value.status?null:0, dialogValue.value.id??null)
         }
     })
 }
@@ -228,6 +229,7 @@ const getCategoryList = () => {
  *
  * @param name 名称
  * @param intro 简介
+ * @param cover 封面
  * @param price 价格
  * @param category 分类
  * @param status 上架状态
@@ -235,10 +237,10 @@ const getCategoryList = () => {
  * @return void
  * @author ChiyukiRuon
  * */
-const editFoodInfo = (name = '', intro = '', price: number | null = null, category: number | null, status: number | null = null, id: number | null = null) => {
+const editFoodInfo = (name = '', intro = '', cover: string = '', price: number | null = null, category: number | null, status: number | null = null, id: number | null = null) => {
     isLoading.value = true
     merchantAPI
-        .editFood(name, intro, price, category, status, id)
+        .editFood(name, intro, cover, price, category, status, id)
         .then(() => {
             dialogVisible.value = false
             isLoading.value = false

@@ -103,6 +103,7 @@ export default defineComponent({
 }
 
 .food-intro {
+    height: 41px;
     overflow: hidden;
     font-size: small;
     display: -webkit-box;

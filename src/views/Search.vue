@@ -50,10 +50,14 @@ watch(() => route.query.term, (newTerm) => {
 
 <template>
     <div class="container">
+        <el-divider content-position="left">商家({{ userList.length }})</el-divider>
         <div class="merchant-container">
+            <div v-if="userList.length === 0">暂无结果</div>
             <UserCard :user-info="user" size="small" v-for="(user, i) in userList" :key="i"/>
         </div>
+        <el-divider content-position="left">美食({{ foodList.length }})</el-divider>
         <div class="food-container">
+            <div v-if="foodList.length === 0">暂无结果</div>
             <FoodCard :food-info="food" size="large" v-for="(food, i) in foodList" :key="i"/>
         </div>
     </div>

@@ -61,7 +61,12 @@ onMounted(() => {
     min-width: 300px;
     padding: 10px;
     background-color: #FFFFFF;
-    overflow: scroll;
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+.main-container::-webkit-scrollbar {
+    display: none;
 }
 
 .side-container {

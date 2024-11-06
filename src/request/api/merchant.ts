@@ -12,7 +12,7 @@ export const getCategory = (page: number, size: number, name: string): Promise<R
 export const getAllCategory = (): Promise<Response> => get(`${BASE_URL}/allcategory`, {})    // 获取商品分类
 export const getReviewList = (page: number, size: number, food: number|null = null) => get(`${BASE_URL}/review`, { page, size, food })    // 获取评论列表
 export const editInfo = (nickname: string, intro: string, phone: string, email: string, address: string, avatar: string): Promise<Response> => post(`${BASE_URL}/info`, { nickname, intro, phone, email, address, avatar })    // 修改商户信息
-export const editFood = (name: string, intro: string, price: number | null, category: number | null, status: number | null, id: number | null): Promise<Response> => post(`${BASE_URL}/food`, { id, name, intro, price, category, status })    // 修改商品信息
+export const editFood = (name: string, intro: string, cover: string, price: number | null, category: number | null, status: number | null, id: number | null): Promise<Response> => post(`${BASE_URL}/food`, { id, name, intro, cover, price, category, status })    // 修改商品信息
 export const editCategory = (category: string, id: number|null): Promise<Response> => post(`${BASE_URL}/category`, { id, category })    // 修改商品分类
 export const deleteFood = (id: number): Promise<Response> => del(`${BASE_URL}/food`, { id })    // 删除美食
 export const deleteCategory = (id: number): Promise<Response> => del(`${BASE_URL}/category`, { id })    // 删除分类

@@ -35,10 +35,10 @@ onMounted(() => {
         <el-header class="header">
             <div @click.prevent="router.push('/home')"><img class="icon" src="../../public/icon.png" alt="icon" width="50vw" /></div>
             <div @click.prevent="router.push('/home')" class="title">小众点评</div>
-            <div class="location">
-                <el-icon class="el-icon"><Location /></el-icon>
-                <div>杭州</div>
-            </div>
+<!--            <div class="location">-->
+<!--                <el-icon class="el-icon"><Location /></el-icon>-->
+<!--                <div>杭州</div>-->
+<!--            </div>-->
             <div class="search-bar">
                 <el-input class="search-input" ref="inputRef" v-model="input" placeholder="输入美食或商家名">
                     <template #append>

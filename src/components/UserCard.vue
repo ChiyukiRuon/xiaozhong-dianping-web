@@ -115,11 +115,12 @@ export default defineComponent({
 
 .user-card-intro {
     width: 200px;
+    max-height: 50px;
     overflow: hidden;
     font-size: small;
     display: -webkit-box;
-    line-clamp: 4;
-    -webkit-line-clamp: 4;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
     word-break: break-all;
     word-wrap: break-word;
     -webkit-box-orient: vertical;

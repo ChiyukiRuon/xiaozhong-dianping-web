@@ -457,9 +457,9 @@ onMounted(() => {
                     </template>
                 </el-result>
             </div>
-            <el-button @click="step++">下一页</el-button>
-            <el-button @click="step--">上一页</el-button>
-            <el-button @click="step = 0">重置</el-button>
+<!--            <el-button @click="step++">下一页</el-button>-->
+<!--            <el-button @click="step&#45;&#45;">上一页</el-button>-->
+<!--            <el-button @click="step = 0">重置</el-button>-->
         </el-main>
     </el-container>
 </template>

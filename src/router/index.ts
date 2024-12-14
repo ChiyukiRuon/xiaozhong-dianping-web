@@ -8,6 +8,7 @@ const router = createRouter({
             path: '/',
             name: 'index',
             component: HomeView,
+            redirect: '/home',
             children: [
                 {
                     path: 'home',
@@ -52,6 +53,10 @@ const router = createRouter({
             name: 'apply',
             component: () => import('../views/Apply.vue')
         },
+        {
+            path: '/:catchAll(.*)',
+            redirect: '/'
+        }
     ]
 })
 

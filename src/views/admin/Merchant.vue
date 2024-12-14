@@ -32,23 +32,23 @@ const columns = ref([
 const filterOptions = ref([
     { label: '用户名', field: 'username', type: 'text' },
     { label: '商家名', field: 'nickname', type: 'text' },
-    {
-        label: '审核项目',
-        field: 'detail',
-        type: 'select',
-        props: {
-            options: [
-                { label: '商家申请', value: 'register' },
-                { label: '头像违规', value: 'avatar' },
-                { label: '商家名违规', value: 'nickname' },
-                { label: '简介违规', value: 'intro' },
-                { label: '邮箱无效', value: 'email' },
-                { label: '手机号无效', value: 'phone' },
-                { label: '地址无效', value: 'address' },
-                { label: '资质无效', value: 'annex' },
-            ]
-        }
-    }
+    // {
+    //     label: '审核项目',
+    //     field: 'detail',
+    //     type: 'select',
+    //     props: {
+    //         options: [
+    //             { label: '商家申请', value: 'register' },
+    //             { label: '头像违规', value: 'avatar' },
+    //             { label: '商家名违规', value: 'nickname' },
+    //             { label: '简介违规', value: 'intro' },
+    //             { label: '邮箱无效', value: 'email' },
+    //             { label: '手机号无效', value: 'phone' },
+    //             { label: '地址无效', value: 'address' },
+    //             { label: '资质无效', value: 'annex' },
+    //         ]
+    //     }
+    // }
 ])
 
 // 审核弹窗

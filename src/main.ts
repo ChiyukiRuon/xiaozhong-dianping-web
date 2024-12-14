@@ -7,6 +7,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import intersectDirective from '@/utils/directive'
 
 const app = createApp(App)
 
@@ -15,5 +16,7 @@ app.use(store)
 app.use(ElementPlus, {
     locale: zhCn,
 })
+
+app.directive('intersect', intersectDirective)
 
 app.mount('#app')

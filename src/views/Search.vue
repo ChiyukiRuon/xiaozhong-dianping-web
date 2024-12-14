@@ -53,7 +53,7 @@ watch(() => route.query.term, (newTerm) => {
         <el-divider content-position="left">商家({{ userList.length }})</el-divider>
         <div class="merchant-container">
             <div v-if="userList.length === 0">暂无结果</div>
-            <UserCard :user-info="user" size="small" v-for="(user, i) in userList" :key="i"/>
+            <UserCard style="margin-right: 10px" :user-info="user" size="small" v-for="(user, i) in userList" :key="i"/>
         </div>
         <el-divider content-position="left">美食({{ foodList.length }})</el-divider>
         <div class="food-container">

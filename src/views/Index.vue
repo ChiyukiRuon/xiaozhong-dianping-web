@@ -3,19 +3,34 @@ import { onMounted, ref } from 'vue'
 import FoodCard from '@/components/FoodCard.vue'
 import { commonAPI } from '@/request/api'
 
-let current = ref(1)
-let size = ref(10)
 let total = ref(0)
+let current = ref(1)
+let size = ref(5)
+
 let foodList = ref([])
 let rankList = ref([])
 
+let hideSkeleton = ref(true)
+
 const getIndex = (page: number = 1, pageSize: number = 10) => {
     commonAPI.getIndex(page, pageSize).then(res => {
-        foodList.value = res.data.list
+        foodList.value = page === 1
+            ? res.data.list
+            : [...foodList.value, ...res.data.list]
         total.value = res.data.total
         current.value = res.data.current
         size.value = res.data.size
+
+        hideSkeleton.value = current.value >= Math.ceil(total.value / size.value)
     })
+}
+
+const loadMore = () => {
+    if (current.value < Math.ceil(total.value / size.value)) {
+        getIndex(current.value + 1, size.value)
+    } else {
+        hideSkeleton.value = true
+    }
 }
 
 const getRank = () => {
@@ -25,7 +40,7 @@ const getRank = () => {
 }
 
 onMounted(() => {
-    getIndex()
+    getIndex(1, size.value)
     getRank()
 })
 </script>
@@ -36,8 +51,15 @@ onMounted(() => {
             <FoodCard
                 :food-info="food"
                 size="large"
-                v-for="( food, i ) in foodList"
-                :key="i"
+                v-for="(food, i) in foodList"
+                :key="`food-${i}`"
+            />
+            <FoodCard
+                v-for="i in size"
+                :key="`skeleton-${i}`"
+                size="skeleton"
+                v-if="!hideSkeleton"
+                v-intersect="i === 1 ? loadMore : null"
             />
         </div>
         <div class="side-container">
@@ -73,9 +95,6 @@ onMounted(() => {
     width: 15vw;
     min-width: 200px;
     max-width: 300px;
-    height: 50%;
-    min-height: 300px;
-    max-height: 600px;
     margin-top: 20px;
     margin-left: 20px;
     padding: 10px;
@@ -83,5 +102,6 @@ onMounted(() => {
     background-color: #FFFFFF;
     display: flex;
     flex-direction: column;
+    align-self: flex-start;
 }
 </style>

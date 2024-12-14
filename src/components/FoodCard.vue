@@ -16,12 +16,40 @@
             />
         </div>
     </div>
-    <div class="food-card-small" v-else @click.prevent="openDetail(foodInfo.id)" :style="shadow?'box-shadow: 0 1px 12px 0 rgba(0, 0, 0, 0.1); padding: 5px;':''">
+    <div
+        class="food-card-small"
+        v-else-if="size === 'small'"
+        @click.prevent="openDetail(foodInfo.id)"
+        :style="shadow ? 'box-shadow: 0 1px 12px 0 rgba(0, 0, 0, 0.1); padding: 5px;' : ''"
+    >
         <img :src="foodInfo.cover" alt="cover" />
         <el-text size="large" tag="b" truncated>{{ foodInfo.name }}</el-text>
-        <div style="margin-left: auto; display: flex; justify-content: center; align-items: center; color: #ff9900">
-            <el-icon style="margin-right: 2px;"><Star /></el-icon>
+        <div
+            style="
+                margin-left: auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #ff9900;
+            "
+        >
+            <el-icon style="margin-right: 2px"><Star /></el-icon>
             {{ foodInfo.score }}
+        </div>
+    </div>
+    <div class="food-card-skeleton" v-else>
+        <div class="food-card">
+            <el-skeleton animated style="width: 200px; height: 304px">
+                <template #template>
+                    <el-skeleton-item variant="image" style="width: 200px; height: 200px" />
+                    <div style="padding: 14px">
+                        <el-skeleton-item variant="p" style="width: 50%" />
+                        <div style="display: flex; align-items: center;">
+                            <el-skeleton-item variant="text" style="margin-right: 16px" />
+                        </div>
+                    </div>
+                </template>
+            </el-skeleton>
         </div>
     </div>
 </template>
@@ -37,13 +65,14 @@ export default defineComponent({
     components: { Star },
     props: {
         size: {
-            type: String as PropType<'small' | 'large'>,
+            type: String as PropType<'small' | 'large' | 'skeleton'>,
             default: 'large',
             required: true
         },
         foodInfo: {
             type: Object,
-            required: true
+            default: {},
+            required: false
         },
         shadow: {
             type: Boolean,

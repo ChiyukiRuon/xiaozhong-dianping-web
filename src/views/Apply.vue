@@ -23,18 +23,21 @@ const props: CascaderProps = {
     lazy: true,
     lazyLoad(node: any, resolve: any) {
         const { level, data } = node
-        commonAPI.getRegions(data.code).then((res: Response) => {
-            const nodes = res.data.map((item: Region) => ({
-                code: item.code,
-                value: item.name,
-                label: item.name,
-                leaf: level >= 3,
-            }))
-            resolve(nodes)
-        }).catch(() => {
-            resolve()
-        })
-    },
+        commonAPI
+            .getRegions(data.code)
+            .then((res: Response) => {
+                const nodes = res.data.map((item: Region) => ({
+                    code: item.code,
+                    value: item.name,
+                    label: item.name,
+                    leaf: level >= 3
+                }))
+                resolve(nodes)
+            })
+            .catch(() => {
+                resolve()
+            })
+    }
 }
 
 // 表单数据
@@ -60,21 +63,24 @@ const validateUsername = (rule: any, value: string, callback: any) => {
         return callback(new Error('请输入用户名'))
     }
     if (isUsernameValid(value)) {
-        userAPI.isUsernameAvailable(value).then((res: Response) => {
-            console.log(res.data)
-            if (!res.data.available) {
-                callback(new Error('用户名已存在'))
-            } else {
-                callback()
-            }
-        }).catch(() => {
-            callback(new Error('服务器内部错误'))
-        })
+        userAPI
+            .isUsernameAvailable(value)
+            .then((res: Response) => {
+                console.log(res.data)
+                if (!res.data.available) {
+                    callback(new Error('用户名已存在'))
+                } else {
+                    callback()
+                }
+            })
+            .catch(() => {
+                callback(new Error('服务器内部错误'))
+            })
     } else {
         if (value.length < 3 || value.length > 30) {
             callback(new Error('用户名长度应在3到30个字符之间'))
         }
-        const invalidChars = value.split('').filter(char => !/^[a-zA-Z0-9_]$/.test(char));
+        const invalidChars = value.split('').filter((char) => !/^[a-zA-Z0-9_]$/.test(char))
         if (invalidChars.length > 0) {
             callback(new Error(`用户名只能包含字母、数字和下划线`))
         }
@@ -87,10 +93,10 @@ const validatePass = (rule: any, value: string, callback: any) => {
         if (isPasswordValid(value)) {
             callback()
         } else {
-            const hasUpperCase = /[A-Z]/.test(value);
-            const hasLowerCase = /[a-z]/.test(value);
-            const hasNumber = /[0-9]/.test(value);
-            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+            const hasUpperCase = /[A-Z]/.test(value)
+            const hasLowerCase = /[a-z]/.test(value)
+            const hasNumber = /[0-9]/.test(value)
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value)
 
             if (value.length < 4 || value.length > 20) {
                 callback(new Error('密码长度应在4到20个字符之间'))
@@ -107,6 +113,7 @@ const validatePass = (rule: any, value: string, callback: any) => {
             if (!hasSpecialChar) {
                 callback(new Error('密码必须包含至少一个特殊字符'))
             }
+            callback(new Error('密码不符合要求'))
         }
     }
 }
@@ -114,7 +121,7 @@ const validatePass2 = (rule: any, value: string, callback: any) => {
     if (value.trim() === '') {
         callback(new Error('请输入确认密码'))
     } else if (value !== registerForm.password) {
-        callback(new Error("两次输入的密码不一致"))
+        callback(new Error('两次输入的密码不一致'))
     } else {
         callback()
     }
@@ -225,35 +232,48 @@ const register = (username: string, password: string) => {
         hashedPassword = hashed
         isLoading.value = true
 
-        merchantAPI.register(username, hashedPassword).then((res: Response) => {
-            ElMessage.success(res.message)
+        merchantAPI
+            .register(username, hashedPassword)
+            .then((res: Response) => {
+                ElMessage.success(res.message)
 
-            localStorage.setItem('token', res.data.token)
-            localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+                localStorage.setItem('token', res.data.token)
+                localStorage.setItem('userInfo', JSON.stringify(res.data.user))
 
-            store.commit('setUserInfo', res.data.user)
-            store.commit('setPath', res.data.path)
-            store.commit('setRoute', res.data.route)
+                store.commit('setUserInfo', res.data.user)
+                store.commit('setPath', res.data.path)
+                store.commit('setRoute', res.data.route)
 
-            isLoading.value = false
-            step.value++
-        }).catch(() => {
-            isLoading.value = false
-        })
+                isLoading.value = false
+                step.value++
+            })
+            .catch(() => {
+                isLoading.value = false
+            })
     })
-
 }
 const apply = (formData: any) => {
     const { address, region } = formData
     const completeAddress = `${region.join(' ')} ${address}`
 
     isLoading.value = true
-    merchantAPI.apply(formData.avatar, formData.nickname, formData.intro, formData.phone, formData.email, completeAddress, formData.annex).then(() => {
-        isLoading.value = false
-        step.value++
-    }).catch(() => {
-        isLoading.value = false
-    })
+    merchantAPI
+        .apply(
+            formData.avatar,
+            formData.nickname,
+            formData.intro,
+            formData.phone,
+            formData.email,
+            completeAddress,
+            formData.annex
+        )
+        .then(() => {
+            isLoading.value = false
+            step.value++
+        })
+        .catch(() => {
+            isLoading.value = false
+        })
 }
 const uploadAvatar = (file: any) => {
     merchantAPI.uploadFile(file.file, 'avatar').then((res: Response) => {
@@ -296,11 +316,11 @@ onMounted(() => {
 <template>
     <el-container style="width: 100vw; height: 100vh">
         <el-header class="header">
-            <div><img class="icon" src="../../public/icon.png" alt="icon" width="50vw"/></div>
+            <div><img class="icon" src="../../public/icon.png" alt="icon" width="50vw" /></div>
             <div class="title">小众点评</div>
             <div class="sub-title">商家申请</div>
         </el-header>
-        <el-main style="height: 100%; display: flex; flex-direction: column; align-items: center;">
+        <el-main style="height: 100%; display: flex; flex-direction: column; align-items: center">
             <el-steps style="width: 100%; max-width: 800px; margin-bottom: 30px" :active="step">
                 <el-step title="Step 1" description="注册账户" :icon="User" />
                 <el-step title="Step 2" description="填写基本信息" :icon="Edit" />
@@ -325,10 +345,17 @@ onMounted(() => {
                             type="password"
                             autocomplete="off"
                             show-password
+                            clearable
                         />
                     </el-form-item>
                     <el-form-item label="确认密码" prop="confirm" class="form-item">
-                        <el-input v-model="registerForm.confirm" type="password" autocomplete="off" />
+                        <el-input
+                            v-model="registerForm.confirm"
+                            type="password"
+                            autocomplete="off"
+                            show-password
+                            clearable
+                        />
                     </el-form-item>
                 </el-form>
                 <div class="btn-area">
@@ -336,7 +363,8 @@ onMounted(() => {
                         type="primary"
                         :loading="isLoading"
                         @click="submitRegister(registerFormRef)"
-                        class="btn">
+                        class="btn"
+                    >
                         下一步
                         <el-icon><ArrowRightBold /></el-icon>
                     </el-button>
@@ -349,19 +377,21 @@ onMounted(() => {
                     :model="detailForm"
                     status-icon
                     label-width="auto"
-                    style="width: 400px">
+                    style="width: 400px"
+                >
                     <el-form-item label="" prop="avatar">
                         <el-upload
-                            style="display: flex;
-                            flex-direction: column; width: 100%"
+                            style="display: flex; flex-direction: column; width: 100%"
                             accept="image/jpeg, image/png"
                             :show-file-list="false"
                             :http-request="uploadAvatar"
                         >
                             <template #trigger>
-                                <div class="image-container"
-                                     @mouseover="hoverTextVisible = true"
-                                     @mouseleave="hoverTextVisible = false">
+                                <div
+                                    class="image-container"
+                                    @mouseover="hoverTextVisible = true"
+                                    @mouseleave="hoverTextVisible = false"
+                                >
                                     <img class="avatar" :src="detailForm.avatar" alt="avatar" />
                                     <div class="overlay" v-if="hoverTextVisible">
                                         <el-icon size="20"><UploadFilled /></el-icon>
@@ -396,7 +426,8 @@ onMounted(() => {
                             @blur="console.log(detailForm.region)"
                             :props="props"
                             v-model="detailForm.region"
-                            separator=" "/>
+                            separator=" "
+                        />
                         <el-input v-model="detailForm.address" placeholder="详细地址" />
                     </el-form-item>
                 </el-form>
@@ -405,7 +436,8 @@ onMounted(() => {
                         type="primary"
                         :loading="isLoading"
                         @click="submitDetail(detailFormRef)"
-                        class="btn">
+                        class="btn"
+                    >
                         下一步
                         <el-icon><ArrowRightBold /></el-icon>
                     </el-button>
@@ -422,44 +454,32 @@ onMounted(() => {
                 >
                     <div v-if="detailForm.annex === ''">
                         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                        <div class="el-upload__text">
-                            将文件拖到这里或 <em>点击上传</em>
-                        </div>
+                        <div class="el-upload__text">将文件拖到这里或 <em>点击上传</em></div>
                     </div>
                     <div v-else>
                         <img :src="detailForm.annex" alt="annex" style="width: 100%" />
                     </div>
                     <template #tip>
-                        <div class="el-upload__tip">
-                            仅支持 jpg、png、jpeg 格式，且不超过 2MB
-                        </div>
+                        <div class="el-upload__tip">仅支持 jpg、png、jpeg 格式，且不超过 2MB</div>
                     </template>
                 </el-upload>
                 <div class="btn-area">
-                    <el-button
-                        type="primary"
-                        :loading="isLoading"
-                        @click="submitApply"
-                        class="btn">
+                    <el-button type="primary" :loading="isLoading" @click="submitApply" class="btn">
                         下一步
                         <el-icon><ArrowRightBold /></el-icon>
                     </el-button>
                 </div>
             </div>
             <div v-else>
-                <el-result
-                    icon="success"
-                    title="申请提交成功"
-                    sub-title="请等待我们的审核"
-                >
+                <el-result icon="success" title="申请提交成功" sub-title="请等待我们的审核">
                     <template #extra>
                         <el-button type="primary" @click="backToHome">返回首页</el-button>
                     </template>
                 </el-result>
             </div>
-<!--            <el-button @click="step++">下一页</el-button>-->
-<!--            <el-button @click="step&#45;&#45;">上一页</el-button>-->
-<!--            <el-button @click="step = 0">重置</el-button>-->
+            <!--            <el-button @click="step++">下一页</el-button>-->
+            <!--            <el-button @click="step&#45;&#45;">上一页</el-button>-->
+            <!--            <el-button @click="step = 0">重置</el-button>-->
         </el-main>
     </el-container>
 </template>

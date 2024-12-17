@@ -3,7 +3,7 @@
         <img class="cover" :src="foodInfo.cover" alt="food-cover" />
         <div class="info">
             <div class="food-title">
-                <el-text size="large" type="primary" tag="b">{{ foodInfo.name }}</el-text>
+                <el-text size="large" type="primary" tag="b" line-clamp="1">{{ foodInfo.name }}</el-text>
             </div>
             <div class="food-intro">{{ foodInfo.intro || '暂无介绍' }}</div>
             <el-rate

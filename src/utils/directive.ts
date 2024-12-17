@@ -17,7 +17,7 @@ const intersectDirective = {
                 if (!timer) {
                     timer = window.setInterval(() => {
                         callback()
-                    }, 100)
+                    }, 500)
                 }
             } else {
                 if (timer) {

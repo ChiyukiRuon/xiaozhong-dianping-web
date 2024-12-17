@@ -4,13 +4,27 @@ import { onMounted, ref } from 'vue'
 import { commonAPI } from '@/request/api';
 import { Dish, Tickets } from '@element-plus/icons-vue'
 import FoodCard from '@/components/FoodCard.vue'
+import { removeEmptySpans } from '@/utils/common'
+
+interface Food {
+    id: number
+    merchant: number
+    name: string
+    price: number
+    intro: string
+    cover: string
+    categoryName: string
+    score: number
+    status: number
+}
 
 const route = useRoute()
 const isLoading = ref(false)
 const CDN_PREFIX = import.meta.env.VITE_CDN_URL
 
 const uid = parseInt(route.params.uid!)
-let foodInfo = ref<any>({})
+let foodInfo = ref<Food[]>([])
+let singleFoodInfo = ref<Food>({} as Food)
 let merchantInfo = ref<any>({})
 let merchantStatistic = ref<any>({})
 let merchantCategory = ref<any[]>([])
@@ -41,6 +55,13 @@ onMounted(() => {
     getAllFood(uid)
     getStatistic(uid)
     getCategory(uid)
+
+    const root = document.querySelector('.merchant-main')
+    if (root) {
+        // 移除空的 span 元素
+        const emptySpans = root.querySelectorAll('span:empty')
+        emptySpans.forEach(span => span.remove())
+    }
 })
 </script>
 
@@ -70,16 +91,16 @@ onMounted(() => {
             </div>
         </div>
         <div class="main-container">
-            <el-tabs tab-position="left" style="height: 100%">
-                <el-tab-pane label="全部">
-                    <div style="display: flex">
+            <el-tabs tab-position="left" @tab-click="removeEmptySpans" style="height: 100%; display: flex; justify-content: center">
+                <el-tab-pane label="全部" style="height: 100%; display: flex; justify-content: center; overflow: hidden">
+                    <div class="food-container">
                         <FoodCard v-for="food in foodInfo" :food-info="food" :size="'large'"/>
                     </div>
                 </el-tab-pane>
-                <el-tab-pane v-for="(category, i) in merchantCategory" :key="i" :label="category.label">
-                    <div style="display: flex">
-                        <span v-for="food in foodInfo">
-                            <FoodCard v-if="food.categoryName === category.label" :food-info="food" :size="'large'"/>
+                <el-tab-pane v-for="(category, i) in merchantCategory" :key="i" :label="category.label" style="height: 100%; display: flex; justify-content: center">
+                    <div class="food-container">
+                        <span v-for="(food, j) in foodInfo">
+                            <FoodCard v-if="food.categoryName == category.label" :food-info="food" :size="'large'" :key="j" />
                         </span>
                     </div>
                 </el-tab-pane>
@@ -166,6 +187,21 @@ onMounted(() => {
     border-radius: 10px 10px 0 0;
     padding: 20px 5px;
     background-color: #ffffff;
-    overflow-y: auto;
+    overflow: hidden;
+}
+
+.food-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-gap: 0;
+    align-items: start;
+    grid-auto-rows: min-content;
+    width: 70vw;
+    max-width: 1000px;
+    min-width: 300px;
+    padding: 10px;
+    background-color: #FFFFFF;
+    overflow: auto;
+    scrollbar-width: none;
 }
 </style>

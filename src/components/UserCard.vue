@@ -128,7 +128,8 @@ export default defineComponent({
 }
 
 .user-card-large-intro {
-    width: 250px;
+    width: 200px;
+    padding: 5px;
     text-align: center;
     margin-bottom: 5px;
     overflow: hidden;

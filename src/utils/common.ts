@@ -1,5 +1,6 @@
 import store from '@/store'
 import router from '@/router'
+import { nextTick } from 'vue'
 
 /**
  * 用户登出
@@ -74,4 +75,15 @@ export const formatStatus = (status: number|string): string|number => {
         default:
             return '未知'
     }
+}
+
+/**
+ * 去除空标签
+ *
+ * @return void
+ * */
+export const removeEmptySpans = async () => {
+    await nextTick()
+    const emptySpans = document.querySelectorAll('span:empty')
+    emptySpans.forEach(span => span.remove())
 }

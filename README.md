@@ -1,39 +1,46 @@
-# xiaozhong-dianping-web
+# 小众点评 - 前端
 
-This template should help get you started developing with Vue 3 in Vite.
+毕业设计
 
-## Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 项目设置
 
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
+### 下载依赖
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 运行开发环境
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### 构建
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 使用 [ESLint](https://eslint.org/) 格式化代码
 
 ```sh
 npm run lint
 ```
+
+## 环境变量说明
+
+| 变量名             | 描述        | 默认值 |
+|-----------------|-----------|-----|
+| `VITE_BASE_URL` | 前端页面地址。   | -   |
+| `VITE_BASE_API` | 后端接口地址前缀。 | -   |
+| `VITE_CDN_URL`  | CDN 地址前缀  | -   |
+
+## LICENSE
+
+[MIT LICENSE](/LICENSE)
+
+---
+[后端](https://github.com/ChiyukiRuon/xiaozhong-dianping)
